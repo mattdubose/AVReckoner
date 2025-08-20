@@ -1,0 +1,46 @@
+﻿<UserControl
+    x:Class="Reckoner.Views.WelcomePageView"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="clr-namespace:Reckoner.ViewModels"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    x:DataType="vm:WelcomePageViewModel"
+    mc:Ignorable="d">
+    <Design.DataContext>
+        <vm:WelcomePageViewModel />
+    </Design.DataContext>
+    <Grid>
+        <StackPanel
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Spacing="24">
+
+            <Image
+                Width="500"
+                HorizontalAlignment="Center"
+                Source="avares://AvReckoner/Assets/foundationwealthp.png"
+                Stretch="Uniform" />
+
+            <Button
+                Width="250"
+                Command="{Binding NavigateToClientsCommand}"
+                Content="🧑‍💼  Clients"
+                FontSize="18" />
+
+            <Button
+                Width="250"
+                Command="{Binding NavigateToSimulationsCommand}"
+                Content="📈 Simulations"
+                FontSize="18" />
+
+            <Button
+                Width="250"
+                Command="{Binding NavigateToSettingsCommand}"
+                Content="⚙️ Settings"
+                FontSize="18" />
+        </StackPanel>
+    </Grid>
+</UserControl>

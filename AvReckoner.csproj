@@ -1,0 +1,54 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="Assets\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AvaloniaXaml Remove="DataTemplates.axaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Views\AccountHoldingsDetailPage.xaml.cs" />
+    <Compile Remove="Views\AccountHoldingsPage.xaml.cs" />
+    <Compile Remove="Views\AccountInfoPage.xaml.cs" />
+    <Compile Remove="Views\ClientWelcomePage.xaml.cs" />
+    <Compile Remove="Views\FWStrategySettingsPopup.xaml.cs" />
+    <Compile Remove="Views\InvestmentPerformancePage.xaml.cs" />
+    <Compile Remove="Views\NewClientForm.xaml.cs" />
+    <Compile Remove="Views\SecuritiesSelectionPage.xaml.cs" />
+    <Compile Remove="Views\StockSearchView.xaml.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.3.2" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.2" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.2" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.2" />
+    <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
+    <PackageReference Include="Avalonia.Diagnostics" Version="11.3.2">
+      <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
+      <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.1" />
+    <PackageReference Include="Dapper" Version="2.1.66" />
+    <PackageReference Include="LiveChartsCore.SkiaSharpView.Avalonia" Version="2.0.0-rc5.4" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.0-preview.6.25358.103" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0-preview.6.25358.103" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.0-preview.6.25358.103" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Views\WelcomePageView.axaml.cs">
+      <DependentUpon>WelcomePageView.axaml</DependentUpon>
+    </Compile>
+  </ItemGroup>
+</Project>
