@@ -1,5 +1,4 @@
-﻿using Reckoner.Repositories;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Reckoner.ViewModels;
 public partial class AccountInfoViewModel : BaseViewModel

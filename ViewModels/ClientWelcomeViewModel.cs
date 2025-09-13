@@ -25,7 +25,7 @@ namespace Reckoner.ViewModels
 
         [ObservableProperty] Client? selectedClient;
         [ObservableProperty] Account? selectedAccount;
-
+        [ObservableProperty] bool continueEnabled = true; 
         public ICommand ContinueCommand { get; }
         public ICommand CreateNewClientCommand { get; }
 
@@ -101,7 +101,7 @@ namespace Reckoner.ViewModels
             _appState.CurrentClient = SelectedClient;
             _appState.CurrentAccount = SelectedAccount;
 
-            await _appShellService.NavigateToAsync(nameof(AccountHoldingsViewModel));
+            await _appShellService.Navigation.NavigateToAsync<AccountHoldingsViewModel>();
         }
         void OpenNewClientForm()
         {

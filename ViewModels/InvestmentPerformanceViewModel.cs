@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore;
@@ -8,7 +7,6 @@ using SkiaSharp;
 using LiveChartsCore.Defaults;
 using Reckoner.Repositories;
 using Reckoner.Utilities;
-using PurpleValley.Utilities;
 
 namespace Reckoner.ViewModels
 {

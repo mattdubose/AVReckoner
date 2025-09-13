@@ -1,15 +1,20 @@
 ﻿global using CommunityToolkit.Mvvm.ComponentModel;
 global using CommunityToolkit.Mvvm.Input;
-global using Reckoner.ViewModels;
-//global using Reckoner.Views;
-global using System.Collections.Generic;
+global using Microsoft.Extensions.Logging;
+global using PurpleValley.UIFramework;
 global using Reckoner.Models;
-global using Reckoner.Services;
+global using Reckoner.Repositories;
+global using Reckoner.Services; 
+global using Reckoner.Utilities;
+global using Reckoner.ViewModels;
+global using System.Collections.Generic;
 global using System.Collections.ObjectModel;
 global using System.ComponentModel;
 global using System.Diagnostics;
 global using System.Globalization;
+global using System.IO;
 global using System.Runtime.CompilerServices;
 global using System.Text.Json;
 global using System.Threading.Tasks;
-global using Microsoft.Extensions.Logging;
+global using Dapper;
+[module: DapperAot]

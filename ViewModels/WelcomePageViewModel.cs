@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using PurpleValley.Utilities;
+
 namespace Reckoner.ViewModels
 {
     public partial class WelcomePageViewModel : BaseViewModel
@@ -14,13 +14,13 @@ namespace Reckoner.ViewModels
         private async Task NavigateToClients()
         {
             Console.Write("Navigating to Clients Page...\n");
-            await _appShellService.NavigateToAsync(nameof(ClientWelcomeViewModel));
+            await _appShellService.Navigation.NavigateToAsync<ClientWelcomeViewModel>();
         }
 
         [RelayCommand]
         private async Task NavigateToSimulations()
         {
-            await _appShellService.NavigateToAsync(nameof(InvestmentPerformanceViewModel));
+            await _appShellService.Navigation.NavigateToAsync<InvestmentPerformanceViewModel>();
         }
 
         [RelayCommand]

@@ -1,31 +1,26 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <InterceptorsPreviewNamespaces>$(InterceptorsPreviewNamespaces);Dapper.AOT</InterceptorsPreviewNamespaces>
+
   </PropertyGroup>
 
   <ItemGroup>
     <AvaloniaResource Include="Assets\**" />
   </ItemGroup>
+	<ItemGroup>
+		<Content Include="Data\**\*">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
 
-  <ItemGroup>
-    <AvaloniaXaml Remove="DataTemplates.axaml" />
-  </ItemGroup>
 
-  <ItemGroup>
-    <Compile Remove="Views\AccountHoldingsDetailPage.xaml.cs" />
-    <Compile Remove="Views\AccountHoldingsPage.xaml.cs" />
-    <Compile Remove="Views\AccountInfoPage.xaml.cs" />
-    <Compile Remove="Views\ClientWelcomePage.xaml.cs" />
-    <Compile Remove="Views\FWStrategySettingsPopup.xaml.cs" />
-    <Compile Remove="Views\InvestmentPerformancePage.xaml.cs" />
-    <Compile Remove="Views\NewClientForm.xaml.cs" />
-    <Compile Remove="Views\SecuritiesSelectionPage.xaml.cs" />
-    <Compile Remove="Views\StockSearchView.xaml.cs" />
+	<ItemGroup>
   </ItemGroup>
 
   <ItemGroup>
@@ -40,15 +35,10 @@
     </PackageReference>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.1" />
     <PackageReference Include="Dapper" Version="2.1.66" />
+    <PackageReference Include="Dapper.AOT" Version="1.0.48" />
     <PackageReference Include="LiveChartsCore.SkiaSharpView.Avalonia" Version="2.0.0-rc5.4" />
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.0-preview.6.25358.103" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0-preview.6.25358.103" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.0-preview.6.25358.103" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Update="Views\WelcomePageView.axaml.cs">
-      <DependentUpon>WelcomePageView.axaml</DependentUpon>
-    </Compile>
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.0-preview.7.25380.108" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0-preview.7.25380.108" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.0-preview.7.25380.108" />
   </ItemGroup>
 </Project>

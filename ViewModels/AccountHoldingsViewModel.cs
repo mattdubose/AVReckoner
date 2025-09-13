@@ -121,7 +121,7 @@ namespace Reckoner.ViewModels
             var perfPage = _services.GetRequiredService<InvestmentPerformancePage>();
 */
             // 3) navigate
-            await _appShellService.NavigateToAsync(nameof(InvestmentPerformanceViewModel));
+            await _appShellService.NavigateToAsync<InvestmentPerformanceViewModel>();
         }
         // Toggle between view and edit mode:
         private void ToggleEditMode()

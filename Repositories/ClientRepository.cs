@@ -1,13 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using Reckoner.Utilities;
+
 namespace Reckoner.Repositories
 {
-  public class ClientJSONpository : IClientRepository
+  public class ClientJSONRepository : IClientRepository
   {
     List<Client>? _clients;
-    public ClientJSONpository(string jsonFile) 
+    public ClientJSONRepository(string jsonFile) 
     {
       Stream stream = FileUtils.OpenFile(jsonFile);
 

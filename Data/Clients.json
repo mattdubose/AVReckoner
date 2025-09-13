@@ -1,0 +1,54 @@
+﻿[
+  {
+    "ClientId": 303,
+    "Address": "32 Exeter Road, Avondale Estates, GA 30002",
+    "Email": "matt_dubose@hotmail.com",
+    "Phone": "+1-404-822-4924",
+    "AccountIds": [ 2001, 2002, 2003 ],
+    "IsMarried": true,
+    "Primary": {
+      "FirstName": "William",
+      "LastName": "DuBose",
+      "MiddleName": "M",
+      "Suffix": null,
+      "DateOfBirth": "1976-02-25",
+      "SSN": "113-46-6789",
+      "PersonID": 101
+    },
+    "Spouse": {
+      "FirstName": "Lucretia",
+      "LastName": "DuBose",
+      "MiddleName": "S",
+      "Suffix": "",
+      "DateOfBirth": "1981-10-09",
+      "SSN": "987-65-4444",
+      "PersonID": 102
+    }
+  },
+  {
+    "ClientId": 101,
+    "Address": "123 Elm Street, Springfield, IL",
+    "Email": "client@example.com",
+    "Phone": "+1-555-1234",
+    "AccountIds": [ 1001 ],
+    "IsMarried": true,
+    "Primary": {
+      "FirstName": "John",
+      "LastName": "Doe",
+      "MiddleName": "A",
+      "Suffix": "Jr",
+      "DateOfBirth": "1980-05-12",
+      "SSN": "123-45-6789",
+      "PersonID": 123456789
+    },
+    "Spouse": {
+      "FirstName": "Jane",
+      "LastName": "Doe",
+      "MiddleName": "B",
+      "Suffix": "",
+      "DateOfBirth": "1982-08-23",
+      "SSN": "987-65-4321",
+      "PersonID": 987654321
+    }
+  }
+]

@@ -1,0 +1,88 @@
+﻿[
+  {
+    "AccountId": 1,
+    "OwnerId": 101,
+    "ClientId": 303,
+    "AccountType": "TraditionalIRA",
+    "Assets": [
+      {
+        "AssetType": "MarketSecurity",
+        "ID": "QQQ",
+        "TickerSymbol": "QQQ",
+        "Name": "Invesco QQQ",
+        "FirstAcquisitionDate": "2020-05-10",
+        "RecentAcquisitionDate": "2023-04-15",
+        "NumberOfShares": 100,
+        "ContributionPercentage": 0.33,
+        "DistributionPercentage": 0.33
+      },
+      {
+        "AssetType": "MarketSecurity",
+        "ID": "SPY",
+        "TickerSymbol": "SPY",
+        "Name": "S%P 500 Index",
+        "FirstAcquisitionDate": "2021-07-20",
+        "RecentAcquisitionDate": "2023-02-10",
+        "NumberOfShares": 50,
+        "ContributionPercentage": 0.34,
+        "DistributionPercentage": 0.34
+      },
+      {
+        "AssetType": "MarketSecurity",
+        "ID": "VTSAX",
+        "TickerSymbol": "VTSAX",
+        "Name": "Vanguaud Total Market",
+        "FirstAcquisitionDate": "2021-07-20",
+        "RecentAcquisitionDate": "2023-02-10",
+        "NumberOfShares": 50,
+        "ContributionPercentage": 0.33,
+        "DistributionPercentage": 0.33
+      }
+    ],
+
+    "InvestmentSchedule": {
+      "BeginContributions": "2001-01-01",
+      "EndContributions": null,
+      "BeginDistributions": null,
+      "ContributionFrequency": {
+        "Interval": "Monthly",
+        "Dates": [ 1 ],
+        "DayOfWeek": null
+      }
+    },
+      "InvestmentAmount": 500.0,
+      "InvestmentStage": "Contributing"
+    },
+  {
+    "AccountId": 2,
+    "OwnerId": 102,
+    "ClientId": 303,
+    "AccountType": "TraditionalIRA",
+    "Assets": [
+      {
+        "AssetType": "MarketSecurity",
+        "ID": "MSFT",
+        "TickerSymbol": "MSFT",
+        "Name": "Microsoft Corp.",
+        "FirstAcquisitionDate": "2019-03-05",
+        "RecentAcquisitionDate": "2023-03-25",
+        "NumberOfShares": 150,
+        "ContributionPercentage": 0.6,
+        "DistributionPercentage": 0.5
+      },
+      {
+        "AssetType": "MarketSecurity",
+        "ID": "GOOGL",
+        "TickerSymbol": "GOOGL",
+        "Name": "Alphabet Inc.",
+        "FirstAcquisitionDate": "2022-01-15",
+        "RecentAcquisitionDate": "2023-01-20",
+        "NumberOfShares": 75,
+        "ContributionPercentage": 0.4,
+        "DistributionPercentage": 0.3
+      }
+    ],
+    "InvestmentSchedule": null,
+    "InvestmentStage": "Contributing"
+  }
+]

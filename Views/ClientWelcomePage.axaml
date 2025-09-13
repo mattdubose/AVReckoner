@@ -1,0 +1,72 @@
+<UserControl
+    x:Class="Reckoner.Views.ClientWelcomePage"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="clr-namespace:Reckoner.ViewModels"
+    x:DataType="vm:ClientWelcomeViewModel"
+    mc:Ignorable="d">
+
+    <!--  DataContext should be set in code-behind via DI  -->
+
+    <StackPanel
+        Margin="20"
+        VerticalAlignment="Center"
+        Spacing="24">
+
+        <Image
+            Width="600"
+            Margin="0,0,0,20"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Top"
+            Source="avares://AvReckoner/Assets/foundationwealthp.png"
+            Stretch="Uniform" />
+
+        <TextBlock
+            HorizontalAlignment="Center"
+            FontSize="18"
+            Text="Select a Client" />
+        <ComboBox ItemsSource="{Binding Clients}" SelectedItem="{Binding SelectedClient, Mode=TwoWay}">
+            <ComboBox.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding FullName}" />
+                </DataTemplate>
+            </ComboBox.ItemTemplate>
+        </ComboBox>
+
+
+        <TextBlock
+            HorizontalAlignment="Center"
+            FontSize="18"
+            IsVisible="{Binding AccountPickerVisible}"
+            Text="Select an Account" />
+
+        <ComboBox
+            IsVisible="{Binding AccountPickerVisible}"
+            ItemsSource="{Binding Accounts}"
+            SelectedItem="{Binding SelectedAccount, Mode=TwoWay}">
+            <ComboBox.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding AccountId}" />
+                </DataTemplate>
+            </ComboBox.ItemTemplate>
+        </ComboBox>
+
+        <Button
+            Command="{Binding NewContinueCommand}"
+            Content="Continue"
+            IsEnabled="{Binding ContinueEnabled}" />
+		<!--
+        <TextBlock
+            HorizontalAlignment="Center"
+            FontStyle="Italic"
+            Foreground="Blue"
+            Text="Or create a new client →">
+            <TextBlock.Gestures>
+                <TapGestureRecognizer Command="{Binding CreateNewClientCommand}" />
+            </TextBlock.Gestures>
+        </TextBlock>
+		-->
+    </StackPanel>
+</UserControl>

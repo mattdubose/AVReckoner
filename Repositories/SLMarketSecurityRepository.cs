@@ -21,7 +21,7 @@ namespace Reckoner.Repositories
         {
             using var conn = new SqliteConnection(_connectionString);
             string query = "SELECT ticker AS TickerSymbol, name AS Name FROM market_securities ORDER BY ticker";
-            return conn.Query<MarketSecurity>(query).ToList();
+            return conn.Query<MarketSecurity>(query).AsList();
         }
 
         public List<MarketSecurity> SearchByTicker(string input)
@@ -33,7 +33,7 @@ namespace Reckoner.Repositories
                 WHERE is_active = 1 AND 
                       LOWER(ticker) LIKE LOWER(@input)
                 ORDER BY ticker";
-            return conn.Query<MarketSecurity>(query, new { input = $"%{input}%" }).ToList();
+            return conn.Query<MarketSecurity>(query, new { input = $"%{input}%" }).AsList();
         }
 
         public List<MarketSecurity> SearchByTickerOrName(string input)
@@ -45,7 +45,7 @@ namespace Reckoner.Repositories
                 WHERE is_active = 1 AND 
                       (LOWER(ticker) LIKE LOWER(@input) OR LOWER(name) LIKE LOWER(@input))
                 ORDER BY ticker";
-            return conn.Query<MarketSecurity>(query, new { input = $"%{input}%" }).ToList();
+            return conn.Query<MarketSecurity>(query, new { input = $"%{input}%" }).AsList();
         }
 
         public void Upsert(MarketSecurityRecord record)

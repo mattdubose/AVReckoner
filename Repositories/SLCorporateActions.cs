@@ -14,7 +14,7 @@ namespace Reckoner.Repositories
 
         public SqliteCorporateActions(string connectionString, string ticker)
         {
-            _connectionString = $"Data Source={connectionString}";
+            _connectionString = connectionString;
             _ticker = ticker;
         }
 
@@ -38,7 +38,7 @@ namespace Reckoner.Repositories
                   FROM price_history 
                   WHERE ticker = @ticker AND date BETWEEN @start AND @end 
                   ORDER BY date",
-                new { ticker = _ticker, start = startDate, end = endDate }).ToList();
+                new { ticker = _ticker, start = startDate, end = endDate }).AsList();
         }
 
         public List<DailyEquityInfo> GetLastXDays(DateTime endDate, int numberToGet)
@@ -50,7 +50,7 @@ namespace Reckoner.Repositories
                   WHERE ticker = @ticker AND date <= @endDate 
                   ORDER BY date DESC 
                   LIMIT @limit",
-                new { ticker = _ticker, endDate, limit = numberToGet }).ToList();
+                new { ticker = _ticker, endDate, limit = numberToGet }).AsList();
         }
 
         public DailyEquityInfo? GetLatestDaysInfo(DateTime startDate, int maxLookback)
@@ -72,32 +72,23 @@ namespace Reckoner.Repositories
                   FROM corporate_actions
                   WHERE effective_date = @date AND ticker = @ticker
                   ORDER BY action_type",
-                new { date, _ticker }).ToList();
+                new { date, _ticker }).AsList();
         }
 
         public List<CorporateAction> GetDividends(DateTime startDate, DateTime endDate)
         {
-            try
-            {
-                using var conn = Connection;
-                return conn.Query<CorporateAction>(
-                    @"SELECT 
-              id AS AccountId,
-              ticker AS Ticker, 
-              action_type AS ActionType, 
-              action_value AS ActionValue, 
-              effective_date AS EffectiveDate
-          FROM corporate_actions
-          WHERE (effective_date BETWEEN @startDate AND @endDate) AND ticker = @ticker
-          ORDER BY action_type",
-                    new { startDate, endDate, ticker = _ticker })  // ✅ Match SQL param name
-                    .ToList();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Query failed: " + ex.Message);
-                throw;  // rethrow if you want to still crash after logging
-            }
+            using var conn = Connection;
+            return conn.Query<CorporateAction>(
+                @"SELECT 
+                      id AS AccountId,
+                      ticker AS Ticker, 
+                      action_type AS ActionType, 
+                      action_value AS ActionValue, 
+                      effective_date AS EffectiveDate
+                  FROM corporate_actions
+                  WHERE (effective_date BETWEEN @startDate AND @endDate) AND ticker = @ticker
+                  ORDER BY action_type",
+                new { startDate, endDate, _ticker }).AsList();
         }
 
         public List<CorporateAction> GetDividend(DateTime date)
@@ -111,7 +102,7 @@ namespace Reckoner.Repositories
                       effective_date AS EffectiveDate
                   FROM corporate_actions
                   WHERE effective_date = @date AND ticker = @ticker AND action_type = 'dividend'",
-                new { date, _ticker }).ToList();
+                new { date, _ticker }).AsList();
         }
 
         public List<CorporateAction> GetSplits(DateTime date)
@@ -125,7 +116,7 @@ namespace Reckoner.Repositories
                       effective_date AS EffectiveDate
                   FROM corporate_actions
                   WHERE effective_date = @date AND ticker = @ticker AND action_type = 'split'",
-                new { date, _ticker }).ToList();
+                new { date, _ticker }).AsList();
         }
 
         public void InsertIfNotExists(CorporateAction action)

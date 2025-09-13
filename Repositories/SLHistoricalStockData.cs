@@ -77,7 +77,7 @@ namespace Reckoner.Repositories
                   FROM price_history 
                   WHERE ticker = @ticker AND date BETWEEN @start AND @end 
                   ORDER BY date",
-                new { ticker = _ticker, start = startDate, end = endDate }).ToList();
+                new { ticker = _ticker, start = startDate, end = endDate }).AsList();
         }
 
         public List<DailyEquityInfo> GetLastXDays(DateTime endDate, int numberToGet)
@@ -89,7 +89,7 @@ namespace Reckoner.Repositories
                   WHERE ticker = @ticker AND date <= @endDate 
                   ORDER BY date DESC 
                   LIMIT @limit",
-                new { ticker = _ticker, endDate, limit = numberToGet }).ToList();
+                new { ticker = _ticker, endDate, limit = numberToGet }).AsList();
         }
 
         public DailyEquityInfo? GetLatestDaysInfo(DateTime startDate, int maxLookback)

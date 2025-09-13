@@ -1,15 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
-using Reckoner.Utilities;
 
 namespace Reckoner.Models
 {
   public class MarketSecurity : Asset
   {
+        [ExplicitConstructor]
     public MarketSecurity(string symbol, string name)
     {
       TickerSymbol = symbol;
@@ -102,16 +98,16 @@ namespace Reckoner.Models
     }
 
   }
-}
 
-public class DailyEquityInfo 
-{
-  [JsonConverter(typeof(DateOnlyJsonConverter))]
-  public DateTime Date { get; set; } 
-  public decimal? High { get; set; }
-  public decimal? Low { get; set; }
-  public decimal? Open { get; set; }
-  public decimal? Close { get; set; }
-  public decimal? OverallHigh { get; set; }
-  public long Volume { get; set; } = 0; // Default to 0 if not provided
+    public class DailyEquityInfo
+    {
+        [JsonConverter(typeof(DateOnlyJsonConverter))]
+        public DateTime Date { get; set; }
+        public decimal? High { get; set; }
+        public decimal? Low { get; set; }
+        public decimal? Open { get; set; }
+        public decimal? Close { get; set; }
+        public decimal? OverallHigh { get; set; }
+        public long Volume { get; set; } = 0; // Default to 0 if not provided
+    }
 }

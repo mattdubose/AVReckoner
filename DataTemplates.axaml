@@ -1,9 +1,0 @@
-<ResourceDictionary
-    xmlns="https://github.com/avaloniaui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:viewmodels="clr-namespace:Reckoner.ViewModelsxx"
-    xmlns:views="clr-namespace:AvReckoner.Views">
-    <DataTemplate DataType="{x:Type viewmodels:WelcomeViewModel}">
-        <views:WelcomePage />
-    </DataTemplate>
-</ResourceDictionary>

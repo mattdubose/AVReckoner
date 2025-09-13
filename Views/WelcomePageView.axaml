@@ -9,9 +9,6 @@
     d:DesignWidth="800"
     x:DataType="vm:WelcomePageViewModel"
     mc:Ignorable="d">
-    <Design.DataContext>
-        <vm:WelcomePageViewModel />
-    </Design.DataContext>
     <Grid>
         <StackPanel
             HorizontalAlignment="Center"
