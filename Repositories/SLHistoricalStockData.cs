@@ -5,6 +5,7 @@ using System.Linq;
 using Microsoft.Data.Sqlite;
 using Dapper;
 using Reckoner.Services;
+using AvReckoner;
 
 namespace Reckoner.Repositories
 {
@@ -13,7 +14,7 @@ namespace Reckoner.Repositories
         public static List<AssetService> BuildAssetServices(Account account)
         {
             List<AssetService> assetServices = new List<AssetService>();
-            var connString = "ReckonerDB.db";
+            var connString = AppPaths.UserFile("ReckonerDB.db");
 
             foreach (var asset in account.Assets)
             {
@@ -72,6 +73,14 @@ namespace Reckoner.Repositories
         public List<DailyEquityInfo> GetInfoBetweenDates(DateTime startDate, DateTime endDate)
         {
             using var conn = Connection;
+            conn.Open();
+
+            var tableExists = conn.ExecuteScalar<long>(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='price_history';");
+            if (tableExists == 0)
+                throw new InvalidOperationException("Connected DB has no table 'price_history'. Check paths.");
+
+
             return conn.Query<DailyEquityInfo>(
                 @"SELECT date, open, high, low, close, NULL as overallhigh
                   FROM price_history 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Reckoner.Repositories;
 using Dapper;
 using System.Linq;
+using AvReckoner;
 
 namespace Reckoner.ViewModels
 {
@@ -17,7 +18,7 @@ namespace Reckoner.ViewModels
         private IMarketSecurityRepository _marketSecurityRepository;
         public Action<SecurityHolding>? OnHoldingAdded { get; set; }
 
-        public StockSearchViewModel(AppShellService appShell) : this(appShell, new SqliteMarketSecurityRepository("ReckonerDB.db"))
+        public StockSearchViewModel(AppShellService appShell) : this(appShell, new SqliteMarketSecurityRepository(AppPaths.UserFile("ReckonerDB.db")))
         {
         }
         public StockSearchViewModel(AppShellService appShell, IMarketSecurityRepository marketSecurityRepository): base(appShell)

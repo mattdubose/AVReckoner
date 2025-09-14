@@ -62,17 +62,23 @@ namespace AvReckoner
             });
 
             // SQLite example
-            services.AddSingleton(sp =>
+        //    services.AddSingleton(sp =>
             {
-                var dbPath = AppPaths.UserFile("Reckoner.db");
+                var dbPath = AppPaths.UserFile("ReckonerDB.db");
                 if (!File.Exists(dbPath))
                 {
-                    var seed = AppPaths.InstalledFile("Data/Reckoner.db");
+                    var seed = AppPaths.InstalledFile("Data/ReckonerDB.db");
                     if (File.Exists(seed)) File.Copy(seed, dbPath);
                 }
-                var connString = $"Data Source={dbPath}";
-                return connString; // or your IDbConnection/DbContext wrapper
+              
+            }//);
+            
+            services.AddSingleton<IMarketSecurityRepository>(sp =>
+            {
+                var dbPath = AppPaths.UserFile("ReckonerDB.db");
+                return new SqliteMarketSecurityRepository(dbPath);
             });
+
             // Register services and viewmodels
             // AddSingleton is for services you want one instance of.
             services.AddSingleton<IUiThreadDispatcher, AvaloniaUiDispatcher>();
