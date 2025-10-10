@@ -7,6 +7,7 @@ using SkiaSharp;
 using LiveChartsCore.Defaults;
 using Reckoner.Repositories;
 using Reckoner.Utilities;
+using System.Threading.Tasks;
 
 namespace Reckoner.ViewModels
 {
@@ -30,9 +31,10 @@ namespace Reckoner.ViewModels
         }
         [RelayCommand] void CancelSim()  { _quitSimulation = true; }
 
-        [RelayCommand] void ClearSims() 
+        [RelayCommand]
+        async Task ClearSims() 
         {
-            _dispatcher.ExecuteOnMainThreadAsync(() =>
+            await _dispatcher.ExecuteOnMainThreadAsync(() =>
             {
                 foreach (var series in ListOfLines.OfType<LineSeries<DateTimePoint>>())
                 {
@@ -63,36 +65,20 @@ namespace Reckoner.ViewModels
 
 
         [RelayCommand]
-        private Task TogglePlayPause()
+        private async Task TogglePlayPause()
         {
             if (IsSimulationRunning)
             {
                 IsPaused = !IsPaused;
-                return Task.CompletedTask;
+                return ;
             }
 
             IsSimulationRunning = true;
             IsPaused = false;
 
             // Run the simulation in the background
-            Task.Run(async () =>
-            {
-                try
-                {
-                    await RunInvestmentSimulation();
-                }
-                catch 
-                {
-                    Console.WriteLine("can't start the investement simulaton!!!");
-                }
-                finally
-                {
-                    IsSimulationRunning = false;
-                    IsPaused = true;
-                }
-            });
+            _ = Task.Run(RunInvestmentSimulation); // fire the long running task
 
-            return Task.CompletedTask;
         }
 
 
@@ -113,7 +99,6 @@ namespace Reckoner.ViewModels
 
 
         [ObservableProperty] private bool isSimulationRunning = false;
-
         [RelayCommand]
         async Task RunInvestmentSimulation()
         {
@@ -123,8 +108,8 @@ namespace Reckoner.ViewModels
             ManagedDateTime managedTimeProvider = new ManagedDateTime();
             DateTimeService.GetInstance.SetDateProvider(managedTimeProvider);
 
-            DateTime endDate = simSettingsVM.ActiveSimSettings.EndDate;
-            DateTime startDate = simSettingsVM.ActiveSimSettings.StartDate;
+            DateTime? endDate = simSettingsVM.ActiveSimSettings.EndDate;
+            DateTime? startDate = simSettingsVM.ActiveSimSettings.StartDate;
             var series = ListOfLines[_numLinesUsed] as LineSeries<DateTimePoint>;
             if (series == null) throw new InvalidOperationException();
 
@@ -137,7 +122,7 @@ namespace Reckoner.ViewModels
                 var workingList = new List<DateTimePoint>();
                 var buffer = new List<DateTimePoint>();
 
-                for (var date = startDate; date < endDate; date = date.AddDays(1))
+                for (var date = startDate; date < endDate; date = date?.AddDays(1))
                 {
                     while (IsPaused)
                     {
@@ -156,12 +141,12 @@ namespace Reckoner.ViewModels
 
                         return;
                     }
-                    managedTimeProvider.SetCurrentDate(date);
+                    managedTimeProvider.SetCurrentDate(date.GetValueOrDefault());
                     _accountService.RunDaysActivities();
                     var y = Math.Round((double)_accountService.GetBalance(), 2);
                     if (double.IsNaN(y) || double.IsInfinity(y)) continue;
 
-                    buffer.Add(new DateTimePoint(date, y));
+                    buffer.Add(new DateTimePoint(date.GetValueOrDefault(), y));
                     // Only flush if enough time has passed or in Instant mode
                     if (SelectedSpeed != DrawSpeed.Instant && buffer.Count >= 200)
                     {
@@ -208,7 +193,7 @@ namespace Reckoner.ViewModels
                 _myAccount = Account.DeepCopy(appState.CurrentAccount);
             }
             List<AssetService> assetServices = SLMarketSecurityHelper.BuildAssetServices(_myAccount);
-
+            _dispatcher = appShell.Dispatcher;
 //            CurrentHoldings = new ObservableCollection<SecurityHolding>(_myAccount.Assets);
             Debug.WriteLine($"Found client: {_myAccount.ClientId} and Owner: {_myAccount.OwnerId} with assetCount: {_myAccount.Assets.Count}");
             _accountService = new AccountService(_myAccount, assetServices);
@@ -242,7 +227,7 @@ namespace Reckoner.ViewModels
         public StockSearchViewModel StockSearchVM { get; private set; }
 
 
-        private void Initialize()
+        private async Task Initialize()
         {
             StockSearchVM = new StockSearchViewModel(_appShellService);
             StockSearchVM.OnHoldingAdded = holding =>
@@ -251,18 +236,16 @@ namespace Reckoner.ViewModels
                 ShowSearchView = false;
 
             };
-            CreateLinesAndSettings();
+           await CreateLinesAndSettings();
         }
 
-        private ObservableCollection<DateTimePoint> myChangedData;
         private List<int> _selectedDates;
 
         public List<ISeries> ListOfLines { get; set; }
-        private void CreateLinesAndSettings()
+        private async Task CreateLinesAndSettings()
         {
-            _dispatcher.ExecuteOnMainThreadAsync(() =>
+            await _dispatcher.ExecuteOnMainThreadAsync(() =>
             {
-
                 ListOfLines = new List<ISeries>();
             });
             _simSettings = new Dictionary<int, SimulationSettings>();
@@ -281,7 +264,7 @@ namespace Reckoner.ViewModels
                     case 3: color = SKColors.Magenta; break;
                     case 4: color = SKColors.Red; break;
                 }
-                _dispatcher.ExecuteOnMainThreadAsync(() =>
+                await _dispatcher.ExecuteOnMainThreadAsync(() =>
                 {
 
                     ListOfLines.Add(new LineSeries<DateTimePoint>

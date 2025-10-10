@@ -15,7 +15,8 @@ namespace AvReckoner
             { typeof(Page2ViewModel), typeof(Page2View) },
             { typeof(Page3ViewModel), typeof(Page3View) },
             { typeof(ClientWelcomeViewModel), typeof(ClientWelcomePage) },
-            { typeof(AccountHoldingsViewModel), typeof(AccountHoldingsPage) }
+            { typeof(AccountHoldingsViewModel), typeof(AccountHoldingsPage) },
+            { typeof(InvestmentPerformanceViewModel), typeof(InvestmentPerformancePage) }   
         };
         public Control? Build(object? param)
         {

@@ -80,7 +80,6 @@ namespace Reckoner.ViewModels
             ToggleEditModeCommand = new RelayCommand(ToggleEditMode);
             SaveChangesCommand = new AsyncRelayCommand(SaveChangesAsync);
             AddSelectedItemCommand = new AsyncRelayCommand(AddSelectedItemAsync);
-
             // Whenever the account changes, reload holdings:
             _appState.PropertyChanged += async (_, e) =>
             {
@@ -88,7 +87,19 @@ namespace Reckoner.ViewModels
                     await LoadHoldingsAsync();
             };
         }
+        // Override the base initialization method
+        public override async Task InitializeAsync()
+        {
+            // 1. Call the base implementation (if needed)
+            await base.InitializeAsync();
 
+            // 2. Load the initial data, ensuring the UI has something to show immediately
+            // This handles the "first load" scenario.
+            if (_appState.CurrentAccount != null)
+            {
+                await LoadHoldingsAsync();
+            }
+        }
         // Command properties (automatically wired by the toolkit):
         public IAsyncRelayCommand LoadHoldingsCommand { get; }
         public IRelayCommand ToggleEditModeCommand { get; }
@@ -98,7 +109,6 @@ namespace Reckoner.ViewModels
         // Reload holdings from the current account’s Assets:
         public async Task LoadHoldingsAsync()
         {
-            
             Holdings.Clear();
             
             if (_myAccount == null) return;
@@ -106,6 +116,7 @@ namespace Reckoner.ViewModels
             foreach (var h in _myAccount.Assets)
                 Holdings.Add(h);
         }
+
         [RelayCommand]
         async Task OpenSimulationCommand()
         {

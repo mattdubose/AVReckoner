@@ -21,8 +21,8 @@ namespace Reckoner.ViewModels
         [ObservableProperty] ObservableCollection<SecurityHolding> holdings = new();
         [ObservableProperty] string name = string.Empty;
         [ObservableProperty] private ContributionBreakdown contributionHelper = ContributionBreakdown.PerContribution;
-        [ObservableProperty] DateTime startDate = new(2002, 1, 1);
-        [ObservableProperty] DateTime endDate = DateTime.Now;
+        [ObservableProperty] DateTime? startDate = new(2002, 1, 1);
+        [ObservableProperty] DateTime? endDate = DateTime.Now;
         [ObservableProperty] decimal contributionAmount = 100;
         [ObservableProperty] private DayOfWeek selectedDayOfWeek = DayOfWeek.Friday;
         [ObservableProperty] private string contributionDates = "1";
@@ -165,7 +165,7 @@ namespace Reckoner.ViewModels
             account.InvestmentSchedule.ContributionFrequency.Dates = CsvReader.GetListOfInts(ActiveSimSettings.ContributionDates);
             account.InvestmentSchedule.AdjustDates();
             account.Strategy = ActiveSimSettings.Strategy;
-            account.StackedActivities.Add(new ActivityHolder(Models.Action.Contribution, ActiveSimSettings.InitialCash, ActiveSimSettings.StartDate));
+            account.StackedActivities.Add(new ActivityHolder(Models.Action.Contribution, ActiveSimSettings.InitialCash, ActiveSimSettings.StartDate.GetValueOrDefault()));
             account.StrategyConfiguration = StrategySettings; // FW Strategy settings
             account.DividentReinvestment = ActiveSimSettings.DividendReinvestment;
 

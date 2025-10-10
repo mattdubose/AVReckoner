@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection; // This is the key using stateme
 using AvReckoner.ViewModels;
 using AvReckoner.Views;
 using System;
+using LiveChartsCore;
 
 namespace AvReckoner
 {
@@ -38,6 +39,9 @@ namespace AvReckoner
         public override void Initialize()
         {
             AvaloniaXamlLoader.Load(this);
+            // LiveCharts configuration section: 
+            LiveCharts.Configure(c => c
+                .AddLiveChartsAppSettings());
         }
 
         public override void OnFrameworkInitializationCompleted()
