@@ -1,22 +1,28 @@
 ﻿using Avalonia;
+using Avalonia.Skia;
+using AvReckoner;
 using System;
-
 namespace AvReckoner
 {
+
     internal class Program
     {
-        // Initialization code. Don't use any Avalonia, third-party APIs or any
-        // SynchronizationContext-reliant code before AppMain is called: things aren't initialized
-        // yet and stuff might break.
         [STAThread]
-        public static void Main(string[] args) => BuildAvaloniaApp()
-            .StartWithClassicDesktopLifetime(args);
+        public static void Main(string[] args)
+            => BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
 
-        // Avalonia configuration, don't remove; also used by visual designer.
         public static AppBuilder BuildAvaloniaApp()
             => AppBuilder.Configure<App>()
                 .UsePlatformDetect()
                 .WithInterFont()
+                .With(new SkiaOptions
+                {
+                    // Optional: tune memory limits, rendering behavior
+                    MaxGpuResourceSizeBytes = 256 * 1024 * 1024,
+                    // Optional: if you want to restrict GPU context behavior
+                    // FramesPerSecond = 60,
+                    // EnableVulkan = true  // (works only in 11.1+)
+                })
                 .LogToTrace();
     }
 }

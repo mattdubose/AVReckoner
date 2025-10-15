@@ -118,72 +118,66 @@ namespace Reckoner.ViewModels
 
             //            List<DateTimePoint> points = new List<DateTimePoint>();
             // reset it:
-            await _dispatcher.ExecuteOnMainThreadAsync(() => series.Values = new List<DateTimePoint>());
-            // Run the simulation loop in a separate thread
+            int numRendered = 0;
+
+            // Ensure we have an ObservableCollection once, and clear it
+            await _dispatcher.ExecuteOnMainThreadAsync(() =>
+            {
+                if (series.Values is ObservableCollection<DateTimePoint> v)
+                    v.Clear();
+                else
+                    series.Values = new ObservableCollection<DateTimePoint>();
+            });
+
+            // Run the simulation loop in a background thread
             await Task.Run(async () =>
             {
-                var workingList = new List<DateTimePoint>();
+                var rnd = new Random();
                 var buffer = new List<DateTimePoint>();
 
                 Debug.WriteLine($"startDate: {startDate} endDate: {endDate}");
                 for (var date = startDate; date < endDate; date = date?.AddDays(1))
                 {
-                    Debug.WriteLine($"date: {date}");
                     while (IsPaused)
                     {
                         await Task.Delay(100); // Poll every 100ms while paused
                         if (_quitSimulation) break;
                     }
+
                     if (_quitSimulation)
                     {
                         Debug.WriteLine("Simulation cancelled by user.");
-                        buffer.Clear();
                         IsSimulationRunning = false;
                         await _dispatcher.ExecuteOnMainThreadAsync(() =>
                         {
-                            series.Values = new List<DateTimePoint>();
+                            if (series.Values is ObservableCollection<DateTimePoint> vals)
+                                vals.Clear();
                         });
-
                         return;
                     }
                     managedTimeProvider.SetCurrentDate(date.GetValueOrDefault());
                     _accountService.RunDaysActivities();
                     var y = Math.Round((double)_accountService.GetBalance(), 2);
+                    // Generate random test data
+//                    var y = rnd.NextDouble() * 100;
                     if (double.IsNaN(y) || double.IsInfinity(y)) continue;
-
-                    buffer.Add(new DateTimePoint(date.GetValueOrDefault(), y));
-                    // Only flush if enough time has passed or in Instant mode
-                    if (SelectedSpeed != DrawSpeed.Instant && buffer.Count >= 200)
-                    {
-                        var flush = buffer.ToList();
-                        buffer.Clear();
-                        await _dispatcher.ExecuteOnMainThreadAsync(() =>
-                        {
-                            workingList.AddRange(flush);
-                            series.Values = new List<DateTimePoint>(workingList); // Forces redraw
-                        });
-
-                        var delay = GetDelay();
-                        if (delay > TimeSpan.Zero)
-                            await Task.Delay(delay);
-                    }
-              }
-
-                // Final flush
-                if (buffer.Count > 0)
-                {
-                    var flush = buffer.ToList();
+                    numRendered++;
                     await _dispatcher.ExecuteOnMainThreadAsync(() =>
                     {
-                        workingList.AddRange(flush);
-                        series.Values = new List<DateTimePoint>(workingList);
+                        if (series.Values is ObservableCollection<DateTimePoint> vals)
+                            vals.Add(new DateTimePoint(date.GetValueOrDefault(), y));
                     });
+
+                    //var delay = GetDelay();
+                    //if (delay > TimeSpan.Zero)
+                    //     await Task.Delay(delay);
+                    //
                 }
             });
 
             _numLinesUsed++;
-            Debug.WriteLine("Done Testing dates");
-                IsSimulationRunning = false;
+            Debug.WriteLine($"Done Testing dates - points rendered: {numRendered}");
+            IsSimulationRunning = false;
           // Re-enable the simulate button after completion
         }
 
