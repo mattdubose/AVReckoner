@@ -8,6 +8,7 @@ using LiveChartsCore.Defaults;
 using Reckoner.Repositories;
 using Reckoner.Utilities;
 using System.Threading.Tasks;
+using System.ComponentModel.Design.Serialization;
 
 namespace Reckoner.ViewModels
 {
@@ -15,6 +16,8 @@ namespace Reckoner.ViewModels
     public partial class InvestmentPerformanceViewModel : BaseViewModel
     {
         IUiThreadDispatcher _dispatcher;
+
+
     
         [ObservableProperty]
         SimulationSettingsViewModel simSettingsVM;
@@ -108,8 +111,8 @@ namespace Reckoner.ViewModels
             ManagedDateTime managedTimeProvider = new ManagedDateTime();
             DateTimeService.GetInstance.SetDateProvider(managedTimeProvider);
 
-            DateTime? endDate = simSettingsVM.ActiveSimSettings.EndDate;
-            DateTime? startDate = simSettingsVM.ActiveSimSettings.StartDate;
+            DateTime? endDate = simSettingsVM.ActiveSimSettings.EndDateOffset?.DateTime;
+            DateTime? startDate = simSettingsVM.ActiveSimSettings.StartDateOffset?.DateTime;
             var series = ListOfLines[_numLinesUsed] as LineSeries<DateTimePoint>;
             if (series == null) throw new InvalidOperationException();
 
@@ -122,8 +125,10 @@ namespace Reckoner.ViewModels
                 var workingList = new List<DateTimePoint>();
                 var buffer = new List<DateTimePoint>();
 
+                Debug.WriteLine($"startDate: {startDate} endDate: {endDate}");
                 for (var date = startDate; date < endDate; date = date?.AddDays(1))
                 {
+                    Debug.WriteLine($"date: {date}");
                     while (IsPaused)
                     {
                         await Task.Delay(100); // Poll every 100ms while paused
@@ -240,13 +245,48 @@ namespace Reckoner.ViewModels
         }
 
         private List<int> _selectedDates;
+        public List<ISeries> series1 = new List<ISeries>();
 
-        public List<ISeries> ListOfLines { get; set; }
+        public ISeries[] Series { get; set; } =
+        {
+    new LineSeries<DateTimePoint>
+    {
+        Values = new DateTimePoint[]
+        {
+            new DateTimePoint(DateTime.Now.AddDays(-5), 10),
+            new DateTimePoint(DateTime.Now.AddDays(-4), 15),
+            new DateTimePoint(DateTime.Now.AddDays(-3), 8),
+            new DateTimePoint(DateTime.Now.AddDays(-2), 18),
+            new DateTimePoint(DateTime.Now.AddDays(-1), 12),
+            new DateTimePoint(DateTime.Now, 20)
+        },
+        Name = "Portfolio A"
+    },
+
+    new LineSeries<DateTimePoint>
+    {
+        Values = new DateTimePoint[]
+        {
+            new DateTimePoint(DateTime.Now.AddDays(-5), 5),
+            new DateTimePoint(DateTime.Now.AddDays(-4), 9),
+            new DateTimePoint(DateTime.Now.AddDays(-3), 12),
+            new DateTimePoint(DateTime.Now.AddDays(-2), 7),
+            new DateTimePoint(DateTime.Now.AddDays(-1), 14),
+            new DateTimePoint(DateTime.Now, 11)
+        },
+        Name = "Portfolio B"
+    }
+};
+
+
+
+        [ObservableProperty]
+        private ObservableCollection<ISeries> listOfLines = new();
         private async Task CreateLinesAndSettings()
         {
             await _dispatcher.ExecuteOnMainThreadAsync(() =>
             {
-                ListOfLines = new List<ISeries>();
+                ListOfLines = new ObservableCollection<ISeries>();
             });
             _simSettings = new Dictionary<int, SimulationSettings>();
             for (int i = 0; i < _MaxLines; i++)

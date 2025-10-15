@@ -14,7 +14,7 @@ namespace Reckoner.Repositories
 
         public SqliteCorporateActions(string connectionString, string ticker)
         {
-            _connectionString = connectionString;
+            _connectionString = $"Data Source={connectionString}";
             _ticker = ticker;
         }
 
@@ -88,7 +88,7 @@ namespace Reckoner.Repositories
                   FROM corporate_actions
                   WHERE (effective_date BETWEEN @startDate AND @endDate) AND ticker = @ticker
                   ORDER BY action_type",
-                new { startDate, endDate, _ticker }).AsList();
+                new { startDate, endDate,ticker = _ticker }).AsList();
         }
 
         public List<CorporateAction> GetDividend(DateTime date)

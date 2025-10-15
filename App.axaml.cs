@@ -40,8 +40,9 @@ namespace AvReckoner
         {
             AvaloniaXamlLoader.Load(this);
             // LiveCharts configuration section: 
-            LiveCharts.Configure(c => c
-                .AddLiveChartsAppSettings());
+/*            LiveCharts.Configure(c => c
+                .AddLiveChartsAppSettings()); 
+*/
         }
 
         public override void OnFrameworkInitializationCompleted()

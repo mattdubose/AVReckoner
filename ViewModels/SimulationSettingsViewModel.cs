@@ -21,8 +21,8 @@ namespace Reckoner.ViewModels
         [ObservableProperty] ObservableCollection<SecurityHolding> holdings = new();
         [ObservableProperty] string name = string.Empty;
         [ObservableProperty] private ContributionBreakdown contributionHelper = ContributionBreakdown.PerContribution;
-        [ObservableProperty] DateTime? startDate = new(2002, 1, 1);
-        [ObservableProperty] DateTime? endDate = DateTime.Now;
+        [ObservableProperty] DateTimeOffset? startDateOffset = new DateTimeOffset( new DateTime (2002, 1, 1));
+        [ObservableProperty] DateTimeOffset? endDateOffset = new DateTimeOffset(DateTime.Now);
         [ObservableProperty] decimal contributionAmount = 100;
         [ObservableProperty] private DayOfWeek selectedDayOfWeek = DayOfWeek.Friday;
         [ObservableProperty] private string contributionDates = "1";
@@ -83,7 +83,7 @@ namespace Reckoner.ViewModels
                 if (ActiveSimSettings.ContributionAmount <= 0)
                     return false;
 
-                if (ActiveSimSettings.StartDate >= ActiveSimSettings.EndDate) return false;
+                if (ActiveSimSettings.StartDateOffset >= ActiveSimSettings.EndDateOffset) return false;
 
                 decimal total = ActiveSimSettings.Holdings.Sum(h => h.ContributionPercentageX100);
                 if (total != 100) return false;
@@ -156,8 +156,8 @@ namespace Reckoner.ViewModels
             {
                 account.InvestmentSchedule.AdjustmentFrequency = new ActionFrequency();
             }
-            account.InvestmentSchedule.BeginContributions = ActiveSimSettings.StartDate;
-            account.InvestmentSchedule.EndContributions = ActiveSimSettings.EndDate;
+            account.InvestmentSchedule.BeginContributions = ActiveSimSettings.StartDateOffset?.DateTime;
+            account.InvestmentSchedule.EndContributions = ActiveSimSettings.EndDateOffset?.DateTime;
             account.InvestmentAmount = ActiveSimSettings.ContributionAmount;
             account.InvestmentSchedule.AdjustmentFrequency.Interval = ActiveSimSettings.RebalanceInterval;
             account.InvestmentSchedule.ContributionFrequency.DayOfWeek = ActiveSimSettings.SelectedDayOfWeek;
@@ -165,7 +165,7 @@ namespace Reckoner.ViewModels
             account.InvestmentSchedule.ContributionFrequency.Dates = CsvReader.GetListOfInts(ActiveSimSettings.ContributionDates);
             account.InvestmentSchedule.AdjustDates();
             account.Strategy = ActiveSimSettings.Strategy;
-            account.StackedActivities.Add(new ActivityHolder(Models.Action.Contribution, ActiveSimSettings.InitialCash, ActiveSimSettings.StartDate.GetValueOrDefault()));
+            account.StackedActivities.Add(new ActivityHolder(Models.Action.Contribution, ActiveSimSettings.InitialCash, ActiveSimSettings.StartDateOffset?.DateTime ?? DateTime.MinValue));
             account.StrategyConfiguration = StrategySettings; // FW Strategy settings
             account.DividentReinvestment = ActiveSimSettings.DividendReinvestment;
 
@@ -198,8 +198,8 @@ namespace Reckoner.ViewModels
 
                 if (investmentSchedule.ContributionFrequency != null)
                 {
-                    ActiveSimSettings.StartDate = investmentSchedule?.BeginContributions ?? ActiveSimSettings.StartDate;
-                    ActiveSimSettings.EndDate = investmentSchedule?.EndContributions ?? ActiveSimSettings.EndDate;
+                    ActiveSimSettings.StartDateOffset = investmentSchedule?.BeginContributions ?? ActiveSimSettings.StartDateOffset;
+                    ActiveSimSettings.EndDateOffset = investmentSchedule?.EndContributions ?? ActiveSimSettings.EndDateOffset;
                     ActiveSimSettings.ContributionAmount = account.InvestmentAmount;
                     if (account.InvestmentSchedule.ContributionFrequency != null)
                     {
