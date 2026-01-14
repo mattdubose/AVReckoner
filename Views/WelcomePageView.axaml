@@ -9,35 +9,48 @@
     d:DesignWidth="800"
     x:DataType="vm:WelcomePageViewModel"
     mc:Ignorable="d">
-    <Grid>
-        <StackPanel
-            HorizontalAlignment="Center"
-            VerticalAlignment="Center"
-            Spacing="24">
+    <Border Classes="page-card">
+        <Grid RowDefinitions="Auto,*">
 
+            <!--  Big logo at the top of the page  -->
             <Image
+                Grid.Row="0"
                 Width="500"
+                Margin="0,40,0,20"
                 HorizontalAlignment="Center"
                 Source="avares://AvReckoner/Assets/foundationwealthp.png"
                 Stretch="Uniform" />
 
-            <Button
-                Width="250"
-                Command="{Binding NavigateToClientsCommand}"
-                Content="🧑‍💼  Clients"
-                FontSize="18" />
+            <!--  Buttons area under the logo  -->
+            <StackPanel
+                Grid.Row="1"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Spacing="16">
 
-            <Button
-                Width="250"
-                Command="{Binding NavigateToSimulationsCommand}"
-                Content="📈 Simulations"
-                FontSize="18" />
+                <Button
+                    Width="250"
+                    Classes="primary"
+                    Command="{Binding NavigateToClientsCommand}"
+                    Content="🧑‍💼  Clients" />
 
-            <Button
-                Width="250"
-                Command="{Binding NavigateToSettingsCommand}"
-                Content="⚙️ Settings"
-                FontSize="18" />
-        </StackPanel>
-    </Grid>
+                <Button
+                    Width="250"
+                    Classes="primary"
+                    Command="{Binding NavigateToSimulationsCommand}"
+                    Content="📈 Simulations"
+                    FontSize="18" />
+
+                <Button
+                    Width="250"
+                    Classes="primary"
+                    Command="{Binding NavigateToSettingsCommand}"
+                    Content="⚙️ Settings"
+                    FontSize="18" />
+
+
+
+            </StackPanel>
+        </Grid>
+    </Border>
 </UserControl>

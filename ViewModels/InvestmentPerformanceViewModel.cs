@@ -66,8 +66,9 @@ namespace Reckoner.ViewModels
         public ObservableCollection<DrawSpeed> SpeedOptions { get; } =
             new(Enum.GetValues<DrawSpeed>());
 
-
-        [RelayCommand]
+        private bool CanTogglePlayPause() => SimSettingsVM?.IsValid == true;
+        [RelayCommand(CanExecute = nameof(CanTogglePlayPause))]
+        
         private async Task TogglePlayPause()
         {
             if (IsSimulationRunning)

@@ -12,6 +12,7 @@
 
     <StackPanel
         Margin="20"
+        HorizontalAlignment="Center"
         VerticalAlignment="Center"
         Spacing="24">
 
@@ -27,7 +28,12 @@
             HorizontalAlignment="Center"
             FontSize="18"
             Text="Select a Client" />
-        <ComboBox ItemsSource="{Binding Clients}" SelectedItem="{Binding SelectedClient, Mode=TwoWay}">
+        <ComboBox
+            Width="300"
+            HorizontalAlignment="Center"
+            HorizontalContentAlignment="Center"
+            ItemsSource="{Binding Clients}"
+            SelectedItem="{Binding SelectedClient, Mode=TwoWay}">
             <ComboBox.ItemTemplate>
                 <DataTemplate>
                     <TextBlock Text="{Binding FullName}" />
@@ -43,6 +49,7 @@
             Text="Select an Account" />
 
         <ComboBox
+            HorizontalAlignment="Center"
             IsVisible="{Binding AccountPickerVisible}"
             ItemsSource="{Binding Accounts}"
             SelectedItem="{Binding SelectedAccount, Mode=TwoWay}">
@@ -54,10 +61,12 @@
         </ComboBox>
 
         <Button
+            HorizontalAlignment="Center"
+            Classes="primary"
             Command="{Binding NewContinueCommand}"
-            Content="Continue"
+            Content="Continue!"
             IsEnabled="{Binding ContinueEnabled}" />
-		<!--
+        <!--
         <TextBlock
             HorizontalAlignment="Center"
             FontStyle="Italic"

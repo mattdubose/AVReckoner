@@ -7,9 +7,15 @@
     <!--  "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options.  -->
 
     <Application.Styles>
+        <!--  Built-in Avalonia Fluent theme  -->
         <FluentTheme />
+
+        <!--  Your custom control styles  -->
+        <StyleInclude Source="avares://AvReckoner/Styles/Controls.axaml" />
     </Application.Styles>
+
     <Application.DataTemplates>
         <local:ViewLocator />
     </Application.DataTemplates>
 </Application>
+    

@@ -5,12 +5,16 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:vm="using:AvReckoner.ViewModels"
-    Title="Simple Navigation Example"
-    Width="400"
-    Height="300"
+    Title="Reckoner"
+    Width="1300"
+    Height="850"
+    MinWidth="1000"
+    MinHeight="650"
     d:DesignHeight="300"
     d:DesignWidth="400"
     x:DataType="vm:MainWindowViewModel"
+    CanResize="True"
+    ExtendClientAreaToDecorationsHint="True"
     WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">
 
@@ -19,6 +23,72 @@
         It displays the correct View based on the data type
         of the CurrentViewModel property.
     -->
-    <ContentControl Content="{Binding CurrentViewModel}" />
+    <Grid RowDefinitions="Auto,*,Auto">
 
+        <!--  ================= HEADER =================  -->
+        <Border
+            Grid.Row="0"
+            Padding="12"
+            Background="#F4F4F4"
+            BorderBrush="#DDDDDD"
+            BorderThickness="0,0,0,1"
+            BoxShadow="0 4 12 0 #22000000">
+            <DockPanel>
+
+                <!--  Back button
+				<Button
+                    Margin="0,0,12,0"
+                    Command="{Binding NavigateBackCommand}"
+                    Content="←"
+                    DockPanel.Dock="Left"
+                    IsVisible="{Binding CanNavigateBack}" />
+
+				-->
+                <Button
+                    Margin="0,0,12,0"
+                    Content="←"
+                    DockPanel.Dock="Left" />
+
+                <!--  App title
+				
+                <TextBlock
+                    VerticalAlignment="Center"
+                    FontSize="22"
+                    FontWeight="SemiBold"
+                    Text="Application Name " />                -->
+                <!--  Optional small logo  -->
+                <Image
+                    Width="120"
+                    DockPanel.Dock="Right"
+                    Source="avares://AvReckoner/Assets/foundationwealthp.png"
+                    Stretch="Uniform" />
+            </DockPanel>
+        </Border>
+
+        <!--  ================= PAGE CONTENT =================  -->
+        <Border
+            Grid.Row="1"
+            Padding="24"
+            Background="#F3F3F7">
+
+            <ContentControl Content="{Binding CurrentViewModel}" />
+
+        </Border>
+
+        <!--  ================= FOOTER =================  -->
+        <Border
+            Grid.Row="2"
+            Padding="8"
+            Background="#F4F4F4"
+            BorderBrush="#DDDDDD"
+            BorderThickness="1,0,0,0">
+
+            <TextBlock
+                HorizontalAlignment="Center"
+                FontSize="12"
+                Foreground="#666"
+                Text="© 2025 Foundation Wealth Planning" />
+        </Border>
+
+    </Grid>
 </Window>
