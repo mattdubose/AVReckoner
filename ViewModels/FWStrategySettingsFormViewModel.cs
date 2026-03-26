@@ -1,35 +1,28 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using PurpleValley.Extensions;
+﻿using PurpleValley.Extensions;
+using Reckoner.Views;
 
-namespace Reckoner.ViewModels
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+namespace Reckoner.ViewModels { 
+public partial class FWStrategySettingsDialogViewModel : ObservableObject
 {
-    public partial class FWStrategySettingsViewModel : BaseViewModel
+    private readonly FWStrategySettingsWindow _window;
+
+    [ObservableProperty]
+    private FWStrategySettings strategySettings;
+
+    public FWStrategySettingsDialogViewModel(FWStrategySettingsWindow window, FWStrategySettings current)
     {
-        public Action<object?>? ClosePopup { get; set; }
-        
-        [ObservableProperty]
-        private string strategyName;
-        public FWStrategySettings StrategySettings { get; }
+        _window = window;
 
-        public FWStrategySettingsViewModel(AppShellService appShell, FWStrategySettings settings):base(appShell)
-        {
-            StrategySettings = settings.DeepCopy();
-        }
-
-        [RelayCommand]
-        private void Save()
-        {
-            ClosePopup?.Invoke(StrategySettings);
-        }
-
-        [RelayCommand]
-        private void Cancel()
-        {
-            ClosePopup?.Invoke(null);
-        }
+        // Make a copy so Cancel discards edits
+        StrategySettings = current.Clone(); // implement Clone or copy ctor
     }
+
+    [RelayCommand]
+    private void Save() => _window.CloseWithResult(StrategySettings);
+
+    [RelayCommand]
+    private void Cancel() => _window.CloseWithResult(null);
+}
 }

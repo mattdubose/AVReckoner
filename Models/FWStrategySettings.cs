@@ -18,5 +18,19 @@ namespace Reckoner.Models
         public bool AllTimeEvaluation { get; set; } = false; // if true, evaluate all time highs and lows, otherwise just use
         public string TickerToEvaluate { get; set; } = string.Empty; // the ticker symbol of the asset that triggered the strategy.
 
+        public FWStrategySettings Clone()
+        {
+            return new FWStrategySettings
+            {
+                TriggerToSell = this.TriggerToSell,
+                TriggerToBuyBack = this.TriggerToBuyBack,
+                TriggerToBuyRecovery = this.TriggerToBuyRecovery,
+                MaxDaysOutOfMarket = this.MaxDaysOutOfMarket, 
+                AllTimeEvaluation = this.AllTimeEvaluation,
+                TickerToEvaluate = this.TickerToEvaluate,
+                LookbackPeriod = this.LookbackPeriod
+            };
+        }
+
     }
 }

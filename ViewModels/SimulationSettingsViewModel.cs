@@ -1,11 +1,16 @@
-﻿using System;
+﻿using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
+using Reckoner.Models;
+using Reckoner.Repositories;
+using Reckoner.Utilities;
+using Reckoner.ViewModels;
+using Reckoner.Views;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Reckoner.Utilities;
-using Reckoner.Models;
-using Reckoner.Repositories;
 
 namespace Reckoner.ViewModels
 {
@@ -123,12 +128,6 @@ namespace Reckoner.ViewModels
 
 
         // When user checks the box, default SelectedFwTicker to first holding (if any):
-        //partial void OnUseFwStrategyChanged(bool oldValue, bool newValue)
-        //{
-        //    if (newValue && ActiveSimSettings.Holdings.Any())
-        //        SelectedFwTicker = ActiveSimSettings.Holdings[0];
-        //}
-        //
         public void UpdateComputed()
         {
             OnPropertyChanged(nameof(IsValid));
@@ -137,6 +136,7 @@ namespace Reckoner.ViewModels
             OnPropertyChanged(nameof(DateHelperText));
             OnPropertyChanged(nameof(UseFWStrategy));
             OnPropertyChanged(nameof(SelectedFwTicker));
+            OpenStrategySettingsCommand.NotifyCanExecuteChanged();
         }
 
         [ObservableProperty]
@@ -248,17 +248,23 @@ namespace Reckoner.ViewModels
         private SimulationSettings activeSimSettings;// = new SimulationSettings();
 
 
-        [RelayCommand(CanExecute = nameof(CanOpenSettings))]
-        private async Task OpenStrategySettingsAsync()
-        {
-            /*
-            var popup = new FWStrategySettingsPopup(new FWStrategySettingsViewModel(StrategySettings));
-            var result = await Shell.Current.CurrentPage.ShowPopupAsync(popup);
-            if (result is FWStrategySettings updatedSettings)
-            {
-                StrategySettings = updatedSettings;
-            }*/
-        }
-        private bool CanOpenSettings() => UseFWStrategy;
+    [RelayCommand(CanExecute = nameof(CanOpenSettings))]
+    private async Task OpenStrategySettingsAsync(TopLevel root)
+    {
+        if (root is not Window owner)
+            return; // or throw a clearer exception
+
+        var win = new FWStrategySettingsWindow();
+        win.DataContext = new FWStrategySettingsDialogViewModel(win, StrategySettings);
+
+        var result = await win.ShowDialog<FWStrategySettings?>(owner);
+
+        if (result != null)
+            StrategySettings = result;
     }
+
+    private bool CanOpenSettings(TopLevel root) => UseFWStrategy;
+
+
+}
 }

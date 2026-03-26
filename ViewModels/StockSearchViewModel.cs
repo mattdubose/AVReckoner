@@ -23,9 +23,9 @@ namespace Reckoner.ViewModels
         }
         public StockSearchViewModel(AppShellService appShell, IMarketSecurityRepository marketSecurityRepository): base(appShell)
         {
-                _marketSecurityRepository = marketSecurityRepository;
-                // Initialize with an empty list
-                _allSecurities = _marketSecurityRepository.GetAll();
+            _marketSecurityRepository = marketSecurityRepository;
+            // Initialize with an empty list
+            _allSecurities = _marketSecurityRepository.GetAll();
             FilteredStocks = new ObservableCollection<MarketSecurity>();
             IsAddButtonClickable = false;
         }

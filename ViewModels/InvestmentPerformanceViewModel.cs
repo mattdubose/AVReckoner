@@ -16,11 +16,28 @@ namespace Reckoner.ViewModels
     public partial class InvestmentPerformanceViewModel : BaseViewModel
     {
         IUiThreadDispatcher _dispatcher;
-
-
     
         [ObservableProperty]
         SimulationSettingsViewModel simSettingsVM;
+
+        partial void OnSimSettingsVMChanged(SimulationSettingsViewModel oldValue, SimulationSettingsViewModel newValue)
+        {
+            if (oldValue != null) oldValue.PropertyChanged -= SimSettingsVM_PropertyChanged;
+            if (newValue != null) newValue.PropertyChanged += SimSettingsVM_PropertyChanged;
+
+            TogglePlayPauseCommand.NotifyCanExecuteChanged();
+        }
+
+        private void SimSettingsVM_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(SimulationSettingsViewModel.IsValid))
+            {
+                TogglePlayPauseCommand.NotifyCanExecuteChanged();
+            }
+        }
+
+        private bool CanTogglePlayPause() => SimSettingsVM?.IsValid == true;
+
         private Account _myAccount = new Account();
         Dictionary<int, SimulationSettings> _simSettings;
         bool _quitSimulation = false;
@@ -66,7 +83,6 @@ namespace Reckoner.ViewModels
         public ObservableCollection<DrawSpeed> SpeedOptions { get; } =
             new(Enum.GetValues<DrawSpeed>());
 
-        private bool CanTogglePlayPause() => SimSettingsVM?.IsValid == true;
         [RelayCommand(CanExecute = nameof(CanTogglePlayPause))]
         
         private async Task TogglePlayPause()
@@ -198,6 +214,7 @@ namespace Reckoner.ViewModels
             Debug.WriteLine($"Found client: {_myAccount.ClientId} and Owner: {_myAccount.OwnerId} with assetCount: {_myAccount.Assets.Count}");
             _accountService = new AccountService(_myAccount, assetServices);
             simSettingsVM = new SimulationSettingsViewModel(appShell, _accountService);
+            SimSettingsVM.PropertyChanged += SimSettingsVM_PropertyChanged;
             Initialize();
         }
         public InvestmentPerformanceViewModel(AppShellService appShell, Account account) : base(appShell)
