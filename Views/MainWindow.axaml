@@ -38,9 +38,17 @@
                 <!--  Back button -->
                 <Button
                     Margin="0,0,12,0"
+                    Classes="plain"
                     Command="{Binding GoBackCommand}"
                     Content="←"
-                    DockPanel.Dock="Left" />
+                    DockPanel.Dock="Left">
+                    <Button.Resources>
+                        <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#E0E0E0" />
+                        <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#C8C8C8" />
+                        <SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="#AAAAAA" />
+                        <SolidColorBrush x:Key="ButtonBorderBrushPressed" Color="#888888" />
+                    </Button.Resources>
+                </Button>
 
                 <!--  App title
 				

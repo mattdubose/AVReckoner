@@ -3,8 +3,7 @@
     <!--  Base button style (applies to all buttons)  -->
     <Styles.Resources>
         <!--  Use whatever purple you liked best here  -->
-        <SolidColorBrush x:Key="PrimaryAccentBrush" Color="#D905ac" />
-<!--        Color="#3f05ac" />-->
+        <SolidColorBrush x:Key="PrimaryAccentBrush" Color="#3f05ac" />
     </Styles.Resources>
 
     <Style Selector="Border.page-card">
@@ -24,38 +23,38 @@
 
     <Style Selector="Button">
         <Style.Resources>
-            <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#C9B1FF" />
-            <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#A381FF" />
+            <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#D9CBFF" />
+            <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#7C50E8" />
             <SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="#A38BE3" />
-            <SolidColorBrush x:Key="ButtonBorderBrushPressed" Color="#7A5AE0" />
+            <SolidColorBrush x:Key="ButtonBorderBrushPressed" Color="#6A3FD0" />
         </Style.Resources>
         <Setter Property="FontSize" Value="18" />
         <Setter Property="Padding" Value="14,10" />
         <Setter Property="CornerRadius" Value="4" />
         <Setter Property="HorizontalContentAlignment" Value="Center" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
-        <Setter Property="Background" Value="#D9CBFF" />
+        <Setter Property="Background" Value="#B89EFF" />
         <Setter Property="Foreground" Value="#3f05ac" />
-        <Setter Property="BorderBrush" Value="#A38BE3" />
+        <Setter Property="BorderBrush" Value="#9B7FE8" />
         <Setter Property="BorderThickness" Value="1" />
     </Style>
 
     <Style Selector="Button.primary">
         <Style.Resources>
             <LinearGradientBrush x:Key="ButtonBackgroundPointerOver" StartPoint="0%,0%" EndPoint="0%,100%">
-                <GradientStop Color="#6C5AA6" Offset="0" />
-                <GradientStop Color="#513F8B" Offset="1" />
+                <GradientStop Color="#3f05ac" Offset="0" />
+                <GradientStop Color="#5a2d99" Offset="1" />
             </LinearGradientBrush>
-            <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#32196F" />
-            <SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="#513F8B" />
-            <SolidColorBrush x:Key="ButtonBorderBrushPressed" Color="#1F0E4A" />
+            <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#270070" />
+            <SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="#3508A0" />
+            <SolidColorBrush x:Key="ButtonBorderBrushPressed" Color="#180050" />
             <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="White" />
             <SolidColorBrush x:Key="ButtonForegroundPressed" Color="White" />
         </Style.Resources>
         <Setter Property="Background">
             <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
-                <GradientStop Color="#3f05ac" Offset="0" />
-                <GradientStop Color="#5a2d99" Offset="1" />
+                <GradientStop Color="#5514CC" Offset="0" />
+                <GradientStop Color="#7035B0" Offset="1" />
             </LinearGradientBrush>
         </Setter>
         <Setter Property="Foreground" Value="White" />
@@ -63,7 +62,14 @@
     </Style>
 
 
-    <Style Selector="Button.secondary">
+    <Style Selector="Button.plain">
+        <Setter Property="Background" Value="#F0F0F0" />
+        <Setter Property="Foreground" Value="#333333" />
+        <Setter Property="BorderBrush" Value="#CCCCCC" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+
+<Style Selector="Button.secondary">
         <Setter Property="Background" Value="#F1E9FF" />
         <Setter Property="Foreground" Value="#3f05ac" />
         <Setter Property="BorderThickness" Value="1" />
