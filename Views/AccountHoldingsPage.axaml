@@ -51,6 +51,7 @@
             <!--  Line 3: Buttons  -->
             <StackPanel Orientation="Horizontal" Spacing="20">
                 <Button
+                Classes="primary"
                     Command="{Binding ToggleEditModeCommand}"
                     Content="Make Changes"
                     IsVisible="{Binding !IsEditMode}" />
@@ -60,7 +61,7 @@
                     Content="Save Changes"
                     IsVisible="{Binding IsEditMode}" />
 
-                <Button Command="{Binding OpenSimulationCommandCommand}" Content="Simulate Contributions" />
+                <Button Classes="primary" Command="{Binding OpenSimulationCommandCommand}" Content="Simulate Contributions" />
 
             </StackPanel>
         </StackPanel>
@@ -78,7 +79,7 @@
                 Background="White"
                 Foreground="Black"
                 Text="{Binding SearchText}"
-                Watermark="Type ticker or name…" />
+                Watermark="Type ticker or nameï¿½" />
 
             <!--  Centered Add button  -->
             <Button

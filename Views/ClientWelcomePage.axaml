@@ -64,7 +64,7 @@
             HorizontalAlignment="Center"
             Classes="primary"
             Command="{Binding NewContinueCommand}"
-            Content="Continue!"
+            Content="Continue"
             IsEnabled="{Binding ContinueEnabled}" />
         <!--
         <TextBlock
