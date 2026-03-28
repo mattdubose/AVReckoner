@@ -1,0 +1,132 @@
+<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--  Base button style (applies to all buttons)  -->
+    <Styles.Resources>
+        <!--  Use whatever purple you liked best here  -->
+        <SolidColorBrush x:Key="PrimaryAccentBrush" Color="#D905ac" />
+<!--        Color="#3f05ac" />-->
+    </Styles.Resources>
+
+    <Style Selector="Border.page-card">
+        <Setter Property="Background" Value="White" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="Padding" Value="32" />
+        <Setter Property="MaxWidth" Value="900" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+
+    </Style>
+
+    <!--  NumericUpDown without spinner buttons  -->
+    <Style Selector="NumericUpDown.nospinner">
+        <Setter Property="ShowButtonSpinner" Value="True" />
+    </Style>
+
+    <Style Selector="Button">
+        <Style.Resources>
+            <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#C9B1FF" />
+            <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#A381FF" />
+            <SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="#A38BE3" />
+            <SolidColorBrush x:Key="ButtonBorderBrushPressed" Color="#7A5AE0" />
+        </Style.Resources>
+        <Setter Property="FontSize" Value="18" />
+        <Setter Property="Padding" Value="14,10" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Background" Value="#D9CBFF" />
+        <Setter Property="Foreground" Value="#3f05ac" />
+        <Setter Property="BorderBrush" Value="#A38BE3" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+
+    <Style Selector="Button.primary">
+        <Style.Resources>
+            <LinearGradientBrush x:Key="ButtonBackgroundPointerOver" StartPoint="0%,0%" EndPoint="0%,100%">
+                <GradientStop Color="#6C5AA6" Offset="0" />
+                <GradientStop Color="#513F8B" Offset="1" />
+            </LinearGradientBrush>
+            <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#32196F" />
+            <SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="#513F8B" />
+            <SolidColorBrush x:Key="ButtonBorderBrushPressed" Color="#1F0E4A" />
+            <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="White" />
+            <SolidColorBrush x:Key="ButtonForegroundPressed" Color="White" />
+        </Style.Resources>
+        <Setter Property="Background">
+            <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                <GradientStop Color="#3f05ac" Offset="0" />
+                <GradientStop Color="#5a2d99" Offset="1" />
+            </LinearGradientBrush>
+        </Setter>
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="BorderThickness" Value="0" />
+    </Style>
+
+
+    <Style Selector="Button.secondary">
+        <Setter Property="Background" Value="#F1E9FF" />
+        <Setter Property="Foreground" Value="#3f05ac" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="BorderBrush" Value="#B8A6E8" />
+    </Style>
+
+    <Style Selector="Button.secondary:pointerover">
+        <Setter Property="Background" Value="#D8C2FF" />
+    </Style>
+
+
+    <Style Selector="ComboBox">
+        <Setter Property="Background" Value="White" />
+        <Setter Property="Foreground" Value="#333333" />
+        <Setter Property="BorderBrush" Value="#C0B0D0" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="2" />
+        <Setter Property="Padding" Value="8,4" />
+        <Setter Property="MinHeight" Value="32" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+
+    <!--  Hover: subtle border + background change  -->
+    <Style Selector="ComboBox:pointerover">
+        <Setter Property="BorderBrush" Value="#B0B0B0" />
+        <Setter Property="Background" Value="#FAFAFA" />
+    </Style>
+
+    <!--  Focused: use your purple accent on the border  -->
+    <Style Selector="ComboBox:focus">
+        <Setter Property="BorderBrush" Value="#C0B0D0" />
+    </Style>
+
+    <!--  Disabled  -->
+    <Style Selector="ComboBox:disabled">
+        <Setter Property="Background" Value="#F0F0F0" />
+        <Setter Property="Foreground" Value="#999999" />
+        <Setter Property="BorderBrush" Value="#DDDDDD" />
+    </Style>
+
+    <!--  ========== ComboBoxItem (items in the dropdown list) ==========  -->
+    <Style Selector="ComboBoxItem">
+        <Setter Property="Padding" Value="8,4" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="#333333" />
+    </Style>
+
+    <!--  Hover over item  -->
+    <Style Selector="ComboBoxItem:pointerover">
+        <Setter Property="Background" Value="#EEEEEE" />
+    </Style>
+
+    <!--  Selected item in dropdown  -->
+    <Style Selector="ComboBoxItem:selected">
+        <Setter Property="Background" Value="{DynamicResource PrimaryAccentBrush}" />
+        <Setter Property="Foreground" Value="White" />
+    </Style>
+    <Style Selector="ComboBox">
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="MinWidth" Value="240" />
+    </Style>
+
+
+
+</Styles>

@@ -1,0 +1,25 @@
+<UserControl
+    x:Class="Reckoner.Controls.PercentageInput"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    x:Name="Root">
+
+    <StackPanel Spacing="4">
+        <StackPanel Orientation="Horizontal" Spacing="6">
+            <TextBox
+                x:Name="PART_TextBox"
+                Width="{Binding BoxWidth, ElementName=Root}"
+                LostFocus="OnLostFocus"
+                Watermark="{Binding Watermark, ElementName=Root}" />
+
+            <TextBlock VerticalAlignment="Center" Text="%" />
+        </StackPanel>
+
+        <TextBlock
+            x:Name="PART_Error"
+            FontSize="12"
+            Foreground="#7A5200"
+            IsVisible="False"
+            Text="{Binding ErrorMessage, ElementName=Root}" />
+    </StackPanel>
+</UserControl>
