@@ -1,0 +1,79 @@
+<Window
+    x:Class="Reckoner.Views.FWStrategySettingsWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:Reckoner.Controls"
+    xmlns:local="clr-namespace:Reckoner.Converters"
+    xmlns:vm="clr-namespace:Reckoner.ViewModels"
+    Title="Strategy Settings"
+    Width="420"
+    x:DataType="vm:FWStrategySettingsDialogViewModel"
+    SizeToContent="Height"
+    WindowStartupLocation="CenterOwner">
+    <Window.Resources>
+        <ResourceDictionary>
+            <local:PercentToStringConverter x:Key="PercentToStringConverter" />
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <!--  “Frame” equivalent  -->
+    <Border
+        Padding="20"
+        Background="White"
+        BorderBrush="#DDD"
+        BorderThickness="1"
+        CornerRadius="12">
+        <StackPanel Spacing="16">
+
+            <TextBlock
+                HorizontalAlignment="Center"
+                FontWeight="Bold"
+                Text="Strategy Settings" />
+
+            <StackPanel Spacing="6">
+                <TextBlock Text="Trigger to Selloff (% down from high)" />
+                <controls:PercentageInput
+                    FormatString="0.00"
+                    MaxPercent="100"
+                    MinPercent="0"
+                    Watermark="12.50"
+                    Value="{Binding StrategySettings.TriggerToSell}" />
+                <!--
+                <TextBox Text="{Binding StrategySettings.TriggerToSell, Mode=TwoWay, Converter={StaticResource PercentToStringConverter}}" />
+                -->
+            </StackPanel>
+
+            <StackPanel Spacing="6">
+                <TextBlock Text="Trigger To Buyback (% down from high)" />
+                <controls:PercentageInput
+                    FormatString="0.00"
+                    MaxPercent="100"
+                    MinPercent="0"
+                    Watermark="12.50"
+                    Value="{Binding StrategySettings.TriggerToBuyBack}" />
+            </StackPanel>
+
+            <StackPanel Spacing="6">
+                <TextBlock Text="Trigger to Buy Recovery (%)" />
+                <controls:PercentageInput
+                    FormatString="0.00"
+                    MaxPercent="100"
+                    MinPercent="0"
+                    Watermark="12.50"
+                    Value="{Binding StrategySettings.TriggerToBuyRecovery}" />
+                <!--
+                <TextBox Text="{Binding StrategySettings.TriggerToBuyRecovery, Mode=TwoWay, Converter={StaticResource PercentToStringConverter}}" />
+                -->
+            </StackPanel>
+
+            <StackPanel
+                HorizontalAlignment="Center"
+                Orientation="Horizontal"
+                Spacing="20">
+                <Button Command="{Binding SaveCommand}" Content="Save" />
+                <Button Command="{Binding CancelCommand}" Content="Cancel" />
+            </StackPanel>
+
+        </StackPanel>
+    </Border>
+</Window>

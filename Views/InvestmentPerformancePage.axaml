@@ -1,0 +1,285 @@
+<UserControl
+    x:Class="Reckoner.Views.InvestmentPerformancePage"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:behaviors="clr-namespace:Reckoner.Behaviors"
+    xmlns:controls="clr-namespace:Reckoner.Controls"
+    xmlns:local="clr-namespace:Reckoner.Converters"
+    xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.Avalonia;assembly=LiveChartsCore.SkiaSharpView.Avalonia"
+    xmlns:model="clr-namespace:Reckoner.Models"
+    xmlns:views="clr-namespace:Reckoner.Views"
+    xmlns:vm="clr-namespace:Reckoner.ViewModels"
+    x:DataType="vm:InvestmentPerformanceViewModel">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <local:PlayPauseTextConverter x:Key="PlayPauseTextConverter" />
+            <local:DateTimeOffsetToDateTimeConverter x:Key="DateOnlyConverter" />
+            <local:BooleanToHeightConverter x:Key="BooleanToHeightConverter" />
+            <local:NullToTextConverter
+                x:Key="NullChecker"
+                NotNullText="✅ OK"
+                NullText="❌ NULL" />
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid RowDefinitions="Auto, *, Auto">
+        <StackPanel Grid.Row="0" Margin="20">
+
+            <!--  Stocks row  -->
+            <ScrollViewer HorizontalScrollBarVisibility="Auto">
+                <StackPanel Orientation="Horizontal">
+                    <ItemsControl ItemsSource="{Binding SimSettingsVM.ActiveSimSettings.Holdings}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="model:SecurityHolding">
+                                <Border
+                                    Margin="5"
+                                    Padding="10"
+                                    Background="White"
+                                    BorderThickness="1"
+                                    BoxShadow="0 2 5 #00000033"
+                                    CornerRadius="8">
+                                    <StackPanel
+                                        Width="120"
+                                        Orientation="Vertical"
+                                        Spacing="4">
+                                        <TextBlock
+                                            HorizontalAlignment="Center"
+                                            FontWeight="Bold"
+                                            Text="{Binding TickerSymbol}" />
+                                        <StackPanel
+                                            HorizontalAlignment="Center"
+                                            Orientation="Horizontal"
+                                            Spacing="4">
+                                            <controls:DecimalInput
+                                                ErrorMessage="Use format 100.00"
+                                                FormatString="0.00"
+                                                Watermark="25.00"
+                                                Value="{Binding ContributionPercentageX100}" />
+                                            <TextBlock VerticalAlignment="Center" Text="%" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <Border
+                        Margin="5"
+                        Padding="10"
+                        Background="White"
+                        BorderThickness="1"
+                        BoxShadow="0 2 5 #00000033"
+                        CornerRadius="8">
+                        <Button
+                            Width="120"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            BorderThickness="0"
+                            Classes="primary"
+                            Command="{Binding AddNewHoldingCommand}"
+                            Content="+"
+                            FontSize="24" />
+                    </Border>
+                    <Border IsVisible="{Binding ShowSearchView}">
+                        <views:StockSearchUC
+                            x:Name="StockSearchUC"
+                            Width="300"
+                            DataContext="{Binding StockSearchVM}" />
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+
+            <StackPanel Margin="0,8,0,4" HorizontalAlignment="Center" Spacing="6">
+
+                <!--  Row 1: Strategy · Ref Ticker · DRIP  -->
+                <WrapPanel HorizontalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2">
+                        <Label VerticalAlignment="Center" FontSize="13" Content="Strategy:" />
+                        <ComboBox
+                            VerticalAlignment="Center"
+                            ItemsSource="{Binding SimSettingsVM.InvestmentStrategies}"
+                            SelectedItem="{Binding SimSettingsVM.ActiveSimSettings.Strategy}" />
+                        <Button
+                            Background="Transparent"
+                            Command="{Binding SimSettingsVM.OpenStrategySettingsCommand}"
+                            CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
+                            Content="⚙️"
+                            FontSize="20"
+                            IsVisible="{Binding SimSettingsVM.UseFWStrategy}" />
+                    </StackPanel>
+                    <StackPanel
+                        IsVisible="{Binding SimSettingsVM.UseFWStrategy}"
+                        Orientation="Horizontal"
+                        Spacing="6"
+                        Margin="0,2">
+                        <TextBlock VerticalAlignment="Center" Foreground="#AAAAAA" FontSize="16" Text="|" Margin="10,0,0,0" />
+                        <Label VerticalAlignment="Center" FontSize="13" Content="Ref Ticker:" />
+                        <ComboBox
+                            VerticalAlignment="Center"
+                            ItemsSource="{Binding SimSettingsVM.ActiveSimSettings.Holdings}"
+                            SelectedItem="{Binding SimSettingsVM.SelectedFwTicker}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding TickerSymbol}" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2">
+                        <TextBlock VerticalAlignment="Center" Foreground="#AAAAAA" FontSize="16" Text="|" Margin="10,0,0,0" />
+                        <Label VerticalAlignment="Center" FontSize="13" Content="DRIP:" />
+                        <CheckBox VerticalAlignment="Center" IsChecked="{Binding SimSettingsVM.ActiveSimSettings.DividendReinvestment}" />
+                    </StackPanel>
+                </WrapPanel>
+
+                <!--  Row 2: Initial Investment · Contribution Amount · Frequency · Day/Date · Rebalance  -->
+                <WrapPanel HorizontalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2">
+                        <Label VerticalAlignment="Center" FontSize="13" Content="Initial Investment:" />
+                        <controls:DecimalInput
+                            ErrorMessage="Use format 1000.00"
+                            FormatString="0.00"
+                            Watermark="1000.00"
+                            Value="{Binding SimSettingsVM.ActiveSimSettings.InitialCash}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2">
+                        <TextBlock VerticalAlignment="Center" Foreground="#AAAAAA" FontSize="16" Text="|" Margin="10,0,0,0" />
+                        <Label VerticalAlignment="Center" FontSize="13" Content="Contribution Amount:" />
+                        <controls:DecimalInput
+                            ErrorMessage="Use format 1000.00"
+                            FormatString="0.00"
+                            Watermark="100.0"
+                            Value="{Binding SimSettingsVM.ActiveSimSettings.ContributionAmount}" />
+                        <ComboBox
+                            VerticalAlignment="Center"
+                            Foreground="Blue"
+                            ItemsSource="{Binding SimSettingsVM.BreadownOptions}"
+                            SelectedItem="{Binding SimSettingsVM.ActiveSimSettings.ContributionHelper}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2">
+                        <TextBlock VerticalAlignment="Center" Foreground="#AAAAAA" FontSize="16" Text="|" Margin="10,0,0,0" />
+                        <Label VerticalAlignment="Center" FontSize="13" Content="Contribution Frequency:" />
+                        <ComboBox
+                            VerticalAlignment="Center"
+                            Foreground="Blue"
+                            ItemsSource="{Binding SimSettingsVM.ContributionFrequencies}"
+                            SelectedItem="{Binding SimSettingsVM.ActiveSimSettings.ContributionInterval}" />
+                    </StackPanel>
+                    <StackPanel
+                        IsVisible="{Binding SimSettingsVM.ShowDayPicker}"
+                        Orientation="Horizontal"
+                        Spacing="6"
+                        Margin="0,2">
+                        <TextBlock VerticalAlignment="Center" Foreground="#AAAAAA" FontSize="16" Text="|" Margin="10,0,0,0" />
+                        <Label VerticalAlignment="Center" FontSize="13" Content="Day of the Week:" />
+                        <ComboBox
+                            VerticalAlignment="Center"
+                            ItemsSource="{Binding SimSettingsVM.DaysOfWeek}"
+                            SelectedItem="{Binding SimSettingsVM.ActiveSimSettings.SelectedDayOfWeek}" />
+                    </StackPanel>
+                    <StackPanel
+                        IsVisible="{Binding SimSettingsVM.ShowDateEntry}"
+                        Orientation="Horizontal"
+                        Spacing="6"
+                        Margin="0,2">
+                        <TextBlock VerticalAlignment="Center" Foreground="#AAAAAA" FontSize="16" Text="|" Margin="10,0,0,0" />
+                        <Label VerticalAlignment="Center" FontSize="13" Content="Days:" />
+                        <TextBox
+                            VerticalAlignment="Center"
+                            Text="{Binding SimSettingsVM.ActiveSimSettings.ContributionDates}"
+                            Watermark="1, 15"
+                            ToolTip.Tip="{Binding SimSettingsVM.DateHelperText}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2">
+                        <TextBlock VerticalAlignment="Center" Foreground="#AAAAAA" FontSize="16" Text="|" Margin="10,0,0,0" />
+                        <Label VerticalAlignment="Center" FontSize="13" Content="Rebalance Frequency:" />
+                        <ComboBox
+                            VerticalAlignment="Center"
+                            Foreground="Blue"
+                            ItemsSource="{Binding SimSettingsVM.ContributionFrequencies}"
+                            SelectedItem="{Binding SimSettingsVM.ActiveSimSettings.RebalanceInterval}" />
+                    </StackPanel>
+                </WrapPanel>
+
+                <!--  Row 4: Start Date · End Date  -->
+                <WrapPanel HorizontalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2">
+                        <Label VerticalAlignment="Center" FontSize="13" Content="Start Date:" />
+                        <DatePicker SelectedDate="{Binding SimSettingsVM.ActiveSimSettings.StartDateOffset, Mode=TwoWay}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2">
+                        <TextBlock VerticalAlignment="Center" Foreground="#AAAAAA" FontSize="16" Text="|" Margin="10,0,0,0" />
+                        <Label VerticalAlignment="Center" FontSize="13" Content="End Date:" />
+                        <DatePicker SelectedDate="{Binding SimSettingsVM.ActiveSimSettings.EndDateOffset, Mode=TwoWay}" />
+                    </StackPanel>
+                </WrapPanel>
+
+            </StackPanel>
+
+            <Border Padding="10" HorizontalAlignment="Center">
+                <StackPanel Orientation="Horizontal" Spacing="20">
+                    <Grid VerticalAlignment="Center" ColumnDefinitions="Auto, Auto">
+                        <Label
+                            Grid.Column="0"
+                            VerticalAlignment="Center"
+                            Content="Speed:" />
+                        <ComboBox
+                            Grid.Column="1"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center"
+                            ItemsSource="{Binding SpeedOptions}"
+                            SelectedItem="{Binding SelectedSpeed}" />
+                    </Grid>
+                    <Button
+                        Width="240"
+                        Height="40"
+                        Classes="primary"
+                        Command="{Binding TogglePlayPauseCommand}"
+                        Content="{Binding IsPaused, Converter={StaticResource PlayPauseTextConverter}}"
+                        FontSize="18" />
+                    <Button
+                        Width="240"
+                        Height="40"
+                        Classes="primary"
+                        Command="{Binding CancelSimCommand}"
+                        Content="❌ Cancel Simulation "
+                        IsEnabled="{Binding IsSimulationRunning}"
+                        IsVisible="{Binding IsSimulationRunning}" />
+                    <Button
+                        Width="240"
+                        Height="40"
+                        Classes="primary"
+                        Command="{Binding ClearSimsCommand}"
+                        Content="Clear All Simulations" />
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+
+        <Grid Grid.Row="1" ColumnDefinitions="*, Auto">
+            <Border
+                Grid.Column="0"
+                Margin="0"
+                Padding="5"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch"
+                Background="White"
+                BorderBrush="Gray"
+                BorderThickness="1"
+                CornerRadius="10">
+                <lvc:CartesianChart
+                    x:Name="MyChart"
+                    Series="{Binding ListOfLines}"
+                    XAxes="{Binding XAxes}"
+                    ZoomMode="X" />
+            </Border>
+        </Grid>
+
+    </Grid>
+</UserControl>

@@ -1,4 +1,6 @@
 ﻿using System;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Text.Json.Serialization;
 
 namespace Reckoner.Models
@@ -43,8 +45,11 @@ namespace Reckoner.Models
         public DateTime? ModifiedDate { get; set; }
     }
 
-    public class SecurityHolding : MarketSecurity
+    public class SecurityHolding : MarketSecurity, INotifyPropertyChanged
   {
+    public event PropertyChangedEventHandler? PropertyChanged;
+    private void NotifyPropertyChanged([CallerMemberName] string name = "") =>
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     [JsonConverter(typeof(DateOnlyJsonConverter))]
     public DateTime? FirstAcquisitionDate { get; set; } /* reset when quantity goes to zero */
     [JsonConverter(typeof(DateOnlyJsonConverter))]
@@ -60,7 +65,7 @@ namespace Reckoner.Models
     public decimal ContributionPercentageX100
     {
         get => (ContributionPercentage ?? 0m) * 100m;
-        set => ContributionPercentage = value / 100m;
+        set { ContributionPercentage = value / 100m; NotifyPropertyChanged(); }
     }
 
     [JsonIgnore]

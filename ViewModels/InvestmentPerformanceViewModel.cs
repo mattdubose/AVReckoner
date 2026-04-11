@@ -28,15 +28,17 @@ namespace Reckoner.ViewModels
             TogglePlayPauseCommand.NotifyCanExecuteChanged();
         }
 
+        [ObservableProperty]
+        private bool simulationHasResults = false;
+
         private void SimSettingsVM_PropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == nameof(SimulationSettingsViewModel.IsValid))
-            {
-                TogglePlayPauseCommand.NotifyCanExecuteChanged();
-            }
+            // Any setting change invalidates the current results
+            SimulationHasResults = false;
+            TogglePlayPauseCommand.NotifyCanExecuteChanged();
         }
 
-        private bool CanTogglePlayPause() => SimSettingsVM?.IsValid == true;
+        private bool CanTogglePlayPause() => SimSettingsVM?.IsValid == true && !SimulationHasResults;
 
         private Account _myAccount = new Account();
         Dictionary<int, SimulationSettings> _simSettings;
@@ -49,10 +51,10 @@ namespace Reckoner.ViewModels
         {
             ShowSearchView = true;
         }
-        [RelayCommand] void CancelSim()  { _quitSimulation = true; }
+        [RelayCommand] void CancelSim() { _quitSimulation = true; IsPaused = true; }
 
         [RelayCommand]
-        async Task ClearSims() 
+        async Task ClearSims()
         {
             await _dispatcher.ExecuteOnMainThreadAsync(() =>
             {
@@ -62,6 +64,8 @@ namespace Reckoner.ViewModels
                 }
             });
             _numLinesUsed = 0;
+            SimulationHasResults = false;
+            TogglePlayPauseCommand.NotifyCanExecuteChanged();
         }
         public enum DrawSpeed
         {
@@ -195,7 +199,9 @@ namespace Reckoner.ViewModels
             _numLinesUsed++;
             Debug.WriteLine($"Done Testing dates - points rendered: {numRendered}");
             IsSimulationRunning = false;
-          // Re-enable the simulate button after completion
+            IsPaused = true;
+            SimulationHasResults = true;
+            TogglePlayPauseCommand.NotifyCanExecuteChanged();
         }
 
         

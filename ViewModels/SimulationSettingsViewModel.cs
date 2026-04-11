@@ -61,12 +61,38 @@ namespace Reckoner.ViewModels
         partial void OnActiveSimSettingsChanged(SimulationSettings oldValue, SimulationSettings newValue)
         {
             if (oldValue != null)
+            {
                 oldValue.PropertyChanged -= ActiveSimSettings_PropertyChanged;
+                oldValue.Holdings.CollectionChanged -= Holdings_CollectionChanged;
+                foreach (var h in oldValue.Holdings)
+                    h.PropertyChanged -= Holding_PropertyChanged;
+            }
 
             if (newValue != null)
+            {
                 newValue.PropertyChanged += ActiveSimSettings_PropertyChanged;
+                newValue.Holdings.CollectionChanged += Holdings_CollectionChanged;
+                foreach (var h in newValue.Holdings)
+                    h.PropertyChanged += Holding_PropertyChanged;
+            }
 
             UpdateComputed(); // Run once on reassignment
+        }
+
+        private void Holdings_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            if (e.OldItems != null)
+                foreach (SecurityHolding h in e.OldItems)
+                    h.PropertyChanged -= Holding_PropertyChanged;
+            if (e.NewItems != null)
+                foreach (SecurityHolding h in e.NewItems)
+                    h.PropertyChanged += Holding_PropertyChanged;
+            UpdateComputed();
+        }
+
+        private void Holding_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            UpdateComputed();
         }
 
         partial void OnSelectedFwTickerChanged(SecurityHolding value)

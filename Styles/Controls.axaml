@@ -130,7 +130,6 @@
     </Style>
     <Style Selector="ComboBox">
         <Setter Property="HorizontalContentAlignment" Value="Center" />
-        <Setter Property="MinWidth" Value="240" />
     </Style>
 
 
