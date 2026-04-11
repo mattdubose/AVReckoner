@@ -1,0 +1,47 @@
+<UserControl
+    x:Class="Reckoner.Views.StockSearchUC"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:mod="clr-namespace:Reckoner.Models"
+    xmlns:vm="clr-namespace:Reckoner.ViewModels"
+    x:DataType="vm:StockSearchViewModel">
+
+    <StackPanel HorizontalAlignment="Center" Spacing="8">
+
+        <!--  SearchBar -> TextBox  -->
+        <TextBox
+            Width="300"
+            Text="{Binding SearchText, Mode=TwoWay}"
+            Watermark="Type ticker or name…" />
+
+        <Button
+            HorizontalAlignment="Center"
+            Command="{Binding AddSelectedItemCommand}"
+            Content="Add"
+            IsEnabled="{Binding IsAddButtonClickable}" />
+
+        <!--  CollectionView -> ListBox  -->
+        <ListBox
+            Width="300"
+            Height="120"
+            ItemsSource="{Binding FilteredStocks}"
+            SelectedItem="{Binding SelectedStock, Mode=TwoWay}">
+            <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="mod:MarketSecurity">
+                    <Border
+                        Margin="5"
+                        Padding="5"
+                        BorderBrush="#DDD"
+                        BorderThickness="1"
+                        CornerRadius="6">
+                        <StackPanel>
+                            <TextBlock FontWeight="Bold" Text="{Binding TickerSymbol}" />
+                            <TextBlock FontSize="12" Text="{Binding Name}" />
+                        </StackPanel>
+                    </Border>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+    </StackPanel>
+</UserControl>
