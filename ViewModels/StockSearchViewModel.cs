@@ -15,6 +15,7 @@ namespace Reckoner.ViewModels
         [ObservableProperty] ObservableCollection<MarketSecurity> filteredStocks = new();
         [ObservableProperty] MarketSecurity? selectedStock;
         [ObservableProperty] bool isAddButtonClickable;
+        [ObservableProperty] bool hasResults;
         private IMarketSecurityRepository _marketSecurityRepository;
         public Action<SecurityHolding>? OnHoldingAdded { get; set; }
 
@@ -39,30 +40,33 @@ namespace Reckoner.ViewModels
             if (string.IsNullOrWhiteSpace(value))
             {
                 FilteredStocks.Clear();
+                HasResults = false;
                 IsAddButtonClickable = false;
                 return;
             }
-    
+
             var matches = _allSecurities
                 .Where(s => s.TickerSymbol.Contains(value, StringComparison.OrdinalIgnoreCase)
                          || s.Name.Contains(value, StringComparison.OrdinalIgnoreCase))
                 .ToList();
-    
+
             FilteredStocks.Clear();
             foreach (var match in matches)
                 FilteredStocks.Add(match);
-    
+
+            HasResults = FilteredStocks.Count > 0;
             IsAddButtonClickable = FilteredStocks.Count == 1;
             if (IsAddButtonClickable)
                 SelectedStock = FilteredStocks[0];
         }
-    
+
         partial void OnSelectedStockChanged(MarketSecurity? value)
         {
             if (value == null) return;
-    
+
             SearchText = $"{value.Name} ({value.TickerSymbol})";
             FilteredStocks.Clear();
+            HasResults = false;
             IsAddButtonClickable = true;
         }
     

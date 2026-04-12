@@ -6,30 +6,31 @@
     xmlns:vm="clr-namespace:Reckoner.ViewModels"
     x:DataType="vm:StockSearchViewModel">
 
-    <StackPanel HorizontalAlignment="Center" Spacing="8">
+    <StackPanel Spacing="4">
 
-        <!--  SearchBar -> TextBox  -->
-        <TextBox
-            Width="300"
-            Text="{Binding SearchText, Mode=TwoWay}"
-            Watermark="Type ticker or name…" />
+        <StackPanel Orientation="Horizontal" Spacing="6">
+            <TextBox
+                Width="220"
+                Text="{Binding SearchText, Mode=TwoWay}"
+                Watermark="Type ticker or name…" />
+            <Button
+                VerticalAlignment="Center"
+                Classes="primary"
+                Command="{Binding AddSelectedItemCommand}"
+                Content="Add"
+                IsEnabled="{Binding IsAddButtonClickable}" />
+        </StackPanel>
 
-        <Button
-            HorizontalAlignment="Center"
-            Command="{Binding AddSelectedItemCommand}"
-            Content="Add"
-            IsEnabled="{Binding IsAddButtonClickable}" />
-
-        <!--  CollectionView -> ListBox  -->
         <ListBox
             Width="300"
-            Height="120"
+            MaxHeight="160"
+            IsVisible="{Binding HasResults}"
             ItemsSource="{Binding FilteredStocks}"
             SelectedItem="{Binding SelectedStock, Mode=TwoWay}">
             <ListBox.ItemTemplate>
                 <DataTemplate x:DataType="mod:MarketSecurity">
                     <Border
-                        Margin="5"
+                        Margin="2"
                         Padding="5"
                         BorderBrush="#DDD"
                         BorderThickness="1"

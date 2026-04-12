@@ -80,6 +80,12 @@
         <Setter Property="Background" Value="#D8C2FF" />
     </Style>
 
+    <Style Selector="Button.primary:disabled">
+        <Setter Property="Background" Value="#CCCCCC" />
+        <Setter Property="Foreground" Value="#888888" />
+        <Setter Property="BorderThickness" Value="0" />
+    </Style>
+
 
     <Style Selector="ComboBox">
         <Setter Property="Background" Value="White" />

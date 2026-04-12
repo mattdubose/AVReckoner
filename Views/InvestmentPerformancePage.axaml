@@ -30,6 +30,12 @@
             <ScrollViewer HorizontalScrollBarVisibility="Auto">
                 <StackPanel Orientation="Horizontal">
                     <ItemsControl ItemsSource="{Binding SimSettingsVM.ActiveSimSettings.Holdings}">
+                        <ItemsControl.Styles>
+                            <!--  Hide the pipe on the very first item  -->
+                            <Style Selector="ContentPresenter:nth-child(1) TextBlock.pipe-separator">
+                                <Setter Property="IsVisible" Value="False" />
+                            </Style>
+                        </ItemsControl.Styles>
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <StackPanel Orientation="Horizontal" />
@@ -37,25 +43,20 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="model:SecurityHolding">
-                                <Border
-                                    Margin="5"
-                                    Padding="10"
-                                    Background="White"
-                                    BorderThickness="1"
-                                    BoxShadow="0 2 5 #00000033"
-                                    CornerRadius="8">
-                                    <StackPanel
-                                        Width="120"
-                                        Orientation="Vertical"
-                                        Spacing="4">
+                                <StackPanel Orientation="Horizontal" Margin="0,0,16,0">
+                                    <TextBlock
+                                        Classes="pipe-separator"
+                                        VerticalAlignment="Center"
+                                        Foreground="#AAAAAA"
+                                        FontSize="16"
+                                        Text="|"
+                                        Margin="0,0,16,2" />
+                                    <StackPanel Orientation="Vertical" Spacing="2">
                                         <TextBlock
                                             HorizontalAlignment="Center"
                                             FontWeight="Bold"
                                             Text="{Binding TickerSymbol}" />
-                                        <StackPanel
-                                            HorizontalAlignment="Center"
-                                            Orientation="Horizontal"
-                                            Spacing="4">
+                                        <StackPanel Orientation="Horizontal" Spacing="4">
                                             <controls:DecimalInput
                                                 ErrorMessage="Use format 100.00"
                                                 FormatString="0.00"
@@ -64,14 +65,16 @@
                                             <TextBlock VerticalAlignment="Center" Text="%" />
                                         </StackPanel>
                                     </StackPanel>
-                                </Border>
+                                </StackPanel>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
 
+                    <!--  + button, hidden while search is open  -->
                     <Border
                         Margin="5"
                         Padding="10"
+                        IsVisible="{Binding !ShowSearchView}"
                         Background="White"
                         BorderThickness="1"
                         BoxShadow="0 2 5 #00000033"
@@ -86,11 +89,26 @@
                             Content="+"
                             FontSize="24" />
                     </Border>
-                    <Border IsVisible="{Binding ShowSearchView}">
-                        <views:StockSearchUC
-                            x:Name="StockSearchUC"
-                            Width="300"
-                            DataContext="{Binding StockSearchVM}" />
+
+                    <!--  Search panel with cancel, shown when search is open  -->
+                    <Border
+                        Margin="5"
+                        Padding="10"
+                        IsVisible="{Binding ShowSearchView}"
+                        Background="White"
+                        BorderThickness="1"
+                        BoxShadow="0 2 5 #00000033"
+                        CornerRadius="8">
+                        <StackPanel Spacing="6">
+                            <views:StockSearchUC
+                                x:Name="StockSearchUC"
+                                DataContext="{Binding StockSearchVM}" />
+                            <Button
+                                HorizontalAlignment="Center"
+                                Classes="primary"
+                                Command="{Binding CancelAddHoldingCommand}"
+                                Content="✕ Cancel" />
+                        </StackPanel>
                     </Border>
                 </StackPanel>
             </ScrollViewer>

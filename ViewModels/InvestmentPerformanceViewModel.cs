@@ -51,6 +51,14 @@ namespace Reckoner.ViewModels
         {
             ShowSearchView = true;
         }
+
+        [RelayCommand]
+        private void CancelAddHolding()
+        {
+            ShowSearchView = false;
+            StockSearchVM.SearchText = string.Empty;
+        }
+
         [RelayCommand] void CancelSim() { _quitSimulation = true; IsPaused = true; }
 
         [RelayCommand]
@@ -128,6 +136,18 @@ namespace Reckoner.ViewModels
         {
             IsSimulationRunning = true;
             _quitSimulation = false;
+            XAxes = new Axis[]
+            {
+                new DateTimeAxis(TimeSpan.FromDays(1), date =>
+                    date.Month == 1 && date.Day <= 7
+                        ? date.ToString("yyyy")
+                        : date.ToString("MMM ''yy"))
+                {
+                    MinStep = TimeSpan.FromDays(28).Ticks,
+                    LabelsRotation = -45,
+                    TextSize = 11,
+                }
+            };
             simSettingsVM.SetSelections();
             ManagedDateTime managedTimeProvider = new ManagedDateTime();
             DateTimeService.GetInstance.SetDateProvider(managedTimeProvider);
@@ -347,9 +367,44 @@ namespace Reckoner.ViewModels
             simSettingsVM.ActiveSimSettings = sim;
             // your existing OnActiveSimSettingsChanged will wire up the chart & form
         }
-        public Axis[] XAxes { get; set; } =
+        [ObservableProperty]
+        private Axis[] xAxes = new Axis[]
         {
-            new DateTimeAxis(TimeSpan.FromDays(1), date => date.ToString("MMMM yy"))
+            new DateTimeAxis(TimeSpan.FromDays(1), date => string.Empty)
+            {
+                MinStep = TimeSpan.FromDays(28).Ticks,
+                LabelsPaint = null,
+            }
         };
+
+        partial void OnSimulationHasResultsChanged(bool value)
+        {
+            if (value)
+            {
+                XAxes = new Axis[]
+                {
+                    new DateTimeAxis(TimeSpan.FromDays(1), date =>
+                        date.Month == 1 && date.Day <= 7
+                            ? date.ToString("yyyy")
+                            : date.ToString("MMM ''yy"))
+                    {
+                        MinStep = TimeSpan.FromDays(28).Ticks,
+                        LabelsRotation = -45,
+                        TextSize = 11,
+                    }
+                };
+            }
+            else
+            {
+                XAxes = new Axis[]
+                {
+                    new DateTimeAxis(TimeSpan.FromDays(1), date => string.Empty)
+                    {
+                        MinStep = TimeSpan.FromDays(28).Ticks,
+                        LabelsPaint = null,
+                    }
+                };
+            }
+        }
     }
 }
