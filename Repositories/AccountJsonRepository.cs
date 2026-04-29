@@ -128,6 +128,23 @@ public class AccountJsonRepository : IAccountRepository
 
     public Task<bool> UpdateAccountAsync(Account account)
     {
-        throw new NotImplementedException();
+        var existing = _accounts.FirstOrDefault(a => a.AccountId == account.AccountId);
+        if (existing == null)
+            return Task.FromResult(false);
+
+        var index = _accounts.IndexOf(existing);
+        _accounts[index] = account;
+
+        try
+        {
+            var json = JsonSerializer.Serialize(_accounts, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(_filePath, json);
+            return Task.FromResult(true);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Failed to save accounts to {_filePath}: {ex.Message}");
+            return Task.FromResult(false);
+        }
     }
 }

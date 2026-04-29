@@ -54,10 +54,20 @@ namespace Reckoner.Repositories
 
     public DailyEquityInfo? GetLatestDaysInfo(DateTime startDate, int maxLookback)
     {
+      // If within cache, use O(1) dictionary lookups instead of triggering DB round-trips
+      if (startDate >= _cachedStart && startDate <= _cachedEnd)
+      {
+        for (int i = 0; i < maxLookback; i++)
+        {
+          if (_cache.TryGetValue(startDate.AddDays(-i), out var cached))
+            return cached;
+        }
+        return null;
+      }
+      // Outside cache window — fall back to DB
       for (int i = 0; i < maxLookback; i++)
       {
-        var date = startDate.AddDays(-i);
-        var info = GetInfo(date);
+        var info = GetInfo(startDate.AddDays(-i));
         if (info != null) return info;
       }
       return null;
@@ -65,7 +75,16 @@ namespace Reckoner.Repositories
 
     public List<DailyEquityInfo> GetLastXDays(DateTime endDate, int numberToGet)
     {
-      return GetInfoBetweenDates(endDate.AddDays(-numberToGet), endDate);
+      var start = endDate.AddDays(-numberToGet);
+      if (start >= _cachedStart && endDate <= _cachedEnd)
+      {
+        return _cache.Values
+            .Where(d => d.Date >= start && d.Date <= endDate)
+            .OrderByDescending(d => d.Date)
+            .Take(numberToGet)
+            .ToList();
+      }
+      return GetInfoBetweenDates(start, endDate);
     }
 
     public MarketInterfaceErrors GetLastError() => _dbSource.GetLastError();

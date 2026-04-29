@@ -110,11 +110,21 @@ namespace Reckoner.ViewModels
         public async Task LoadHoldingsAsync()
         {
             Holdings.Clear();
-            
+
             if (_myAccount == null) return;
 
             foreach (var h in _myAccount.Assets)
+            {
+                // Back-fill Name from the securities master list if it's missing
+                if (string.IsNullOrEmpty(h.Name))
+                {
+                    var match = _allSecurities.FirstOrDefault(s =>
+                        s.TickerSymbol.Equals(h.TickerSymbol, StringComparison.OrdinalIgnoreCase));
+                    if (match != null)
+                        h.Name = match.Name;
+                }
                 Holdings.Add(h);
+            }
         }
 
         [RelayCommand]

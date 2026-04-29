@@ -96,6 +96,12 @@ namespace Reckoner.Services
       
     }
 
+    public void PreloadRange(string tickerSymbol, DateTime start, DateTime end)
+    {
+      // A single GetInfoBetweenDates call fills the caching layer for the entire range
+      _historicalDataIf.GetInfoBetweenDates(start, end);
+    }
+
     public MarketInterfaceErrors GetLastError()
     {
       throw new NotImplementedException();

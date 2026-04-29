@@ -29,5 +29,7 @@ public interface IMarketInterfaceErrors
       public decimal SellInDollars(string securityID, decimal Dollars);
       public decimal SellNumShares(string securityID, decimal NumShares);
       public decimal GetLatestPrice(string tickerSymbol);
+      /// <summary>Pre-warms the underlying data cache for the full simulation range.</summary>
+      public void PreloadRange(string tickerSymbol, DateTime start, DateTime end) { }
   }
 }

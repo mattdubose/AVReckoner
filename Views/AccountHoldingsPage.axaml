@@ -57,6 +57,7 @@
                     IsVisible="{Binding !IsEditMode}" />
 
                 <Button
+                    Classes="primary"
                     Command="{Binding SaveChangesCommand}"
                     Content="Save Changes"
                     IsVisible="{Binding IsEditMode}" />

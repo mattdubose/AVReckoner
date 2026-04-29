@@ -114,17 +114,32 @@ namespace Reckoner.ViewModels
         }
 
 
-        private TimeSpan GetDelay()
+        // Target number of visual update steps for each speed — feels consistent regardless of date span
+        private int GetTargetSteps() => SelectedSpeed switch
         {
-            return SelectedSpeed switch
-            {
-                DrawSpeed.Slow => TimeSpan.FromMilliseconds(100),
-                DrawSpeed.Medium => TimeSpan.FromMilliseconds(50),
-                DrawSpeed.Fast => TimeSpan.FromMilliseconds(1),
-                DrawSpeed.Instant => TimeSpan.Zero,
-                _ => TimeSpan.FromMilliseconds(100)
-            };
+            DrawSpeed.Slow    => 200,
+            DrawSpeed.Medium  => 80,
+            DrawSpeed.Fast    => 25,
+            DrawSpeed.Instant => 1,
+            _ => 80
+        };
+
+        private int GetBatchSize(int totalDays)
+        {
+            if (SelectedSpeed == DrawSpeed.Instant) return totalDays; // single flush
+            int steps = GetTargetSteps();
+            return Math.Max(1, totalDays / steps);
         }
+
+        // Delay between batches (gives the animated "growth" feel)
+        private TimeSpan GetDelay() => SelectedSpeed switch
+        {
+            DrawSpeed.Slow    => TimeSpan.FromMilliseconds(80),
+            DrawSpeed.Medium  => TimeSpan.FromMilliseconds(40),
+            DrawSpeed.Fast    => TimeSpan.FromMilliseconds(8),
+            DrawSpeed.Instant => TimeSpan.Zero,
+            _ => TimeSpan.FromMilliseconds(40)
+        };
 
         [ObservableProperty]
         private int smoothCount = 120;
@@ -170,50 +185,66 @@ namespace Reckoner.ViewModels
                     series.Values = new ObservableCollection<DateTimePoint>();
             });
 
+            // Pre-warm all asset caches for the full sim range — one DB query per asset
+            await Task.Run(() => _accountService.PreloadForSimulation(
+                startDate.GetValueOrDefault(), endDate.GetValueOrDefault()));
+
             // Run the simulation loop in a background thread
             await Task.Run(async () =>
             {
-                var rnd = new Random();
-                var buffer = new List<DateTimePoint>();
+                int totalDays = (int)((endDate ?? DateTime.Now) - (startDate ?? DateTime.Now)).TotalDays;
+                int batchSize = GetBatchSize(totalDays);
+                TimeSpan delay = GetDelay();
 
-                Debug.WriteLine($"startDate: {startDate} endDate: {endDate}");
+                // Grows with every computed point — we replace series.Values each flush (one render per batch)
+                var allPoints = new List<DateTimePoint>(totalDays);
+                int dayIndex = 0;
+
+                Debug.WriteLine($"startDate: {startDate} endDate: {endDate}  totalDays: {totalDays}  batchSize: {batchSize}");
                 for (var date = startDate; date < endDate; date = date?.AddDays(1))
                 {
                     while (IsPaused)
                     {
-                        await Task.Delay(100); // Poll every 100ms while paused
+                        await Task.Delay(100);
                         if (_quitSimulation) break;
                     }
 
                     if (_quitSimulation)
                     {
-                        Debug.WriteLine("Simulation cancelled by user.");
+                        Debug.WriteLine("Simulation cancelled.");
                         IsSimulationRunning = false;
-                        await _dispatcher.ExecuteOnMainThreadAsync(() =>
-                        {
-                            if (series.Values is ObservableCollection<DateTimePoint> vals)
-                                vals.Clear();
-                        });
+                        await _dispatcher.ExecuteOnMainThreadAsync(() => series.Values = new List<DateTimePoint>());
                         return;
                     }
+
                     managedTimeProvider.SetCurrentDate(date.GetValueOrDefault());
                     _accountService.RunDaysActivities();
                     var y = Math.Round((double)_accountService.GetBalance(), 2);
-                    // Generate random test data
-//                    var y = rnd.NextDouble() * 100;
-                    if (double.IsNaN(y) || double.IsInfinity(y)) continue;
-                    numRendered++;
-                    await _dispatcher.ExecuteOnMainThreadAsync(() =>
-                    {
-                        if (series.Values is ObservableCollection<DateTimePoint> vals)
-                            vals.Add(new DateTimePoint(date.GetValueOrDefault(), y));
-                    });
+                    if (double.IsNaN(y) || double.IsInfinity(y)) { dayIndex++; continue; }
 
-                    //var delay = GetDelay();
-                    //if (delay > TimeSpan.Zero)
-                    //     await Task.Delay(delay);
-                    //
+                    allPoints.Add(new DateTimePoint(date.GetValueOrDefault(), y));
+                    numRendered++;
+                    dayIndex++;
+
+                    // Smooth start: render every day for the first 90 days so the line
+                    // launches visibly; after that use the calculated batch size.
+                    int effectiveBatch = dayIndex <= 90 ? 1 : batchSize;
+
+                    if (allPoints.Count % effectiveBatch == 0)
+                    {
+                        // Assign the same list reference — no copy.
+                        // Safe because we await the dispatcher, so the background thread
+                        // is idle while LiveCharts reads the list for this render cycle.
+                        var toRender = allPoints;
+                        await _dispatcher.ExecuteOnMainThreadAsync(() => series.Values = toRender);
+                        if (delay > TimeSpan.Zero)
+                            await Task.Delay(delay);
+                    }
                 }
+
+                // Final flush
+                var finalPoints = allPoints;
+                await _dispatcher.ExecuteOnMainThreadAsync(() => series.Values = finalPoints);
             });
 
             _numLinesUsed++;

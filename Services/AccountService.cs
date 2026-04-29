@@ -20,6 +20,16 @@ namespace Reckoner.Services
         InvestmentStrategyService = new FWInvestmentStrategy (Assets, _account.StrategyConfiguration);
     }
     public decimal AllTimeHigh { get; private set; } = 0;
+
+    /// <summary>
+    /// Pre-warms all asset price and corporate action caches for the full sim range.
+    /// Call once before the simulation loop — eliminates repeated DB round-trips.
+    /// </summary>
+    public void PreloadForSimulation(DateTime start, DateTime end)
+    {
+        foreach (var asset in Assets)
+            asset.Preload(start, end);
+    }
     bool CanPerformTradeActionToday()
     {
         foreach (AssetService asset in Assets)

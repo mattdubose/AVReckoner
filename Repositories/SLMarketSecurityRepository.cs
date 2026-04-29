@@ -20,8 +20,9 @@ namespace Reckoner.Repositories
         public List<MarketSecurity> GetAll()
         {
             using var conn = new SqliteConnection(_connectionString);
-            string query = "SELECT ticker AS TickerSymbol, name AS Name FROM market_securities ORDER BY ticker";
-            return conn.Query<MarketSecurity>(query).AsList();
+            return conn.Query<(string ticker, string name)>("SELECT ticker, name FROM market_securities ORDER BY ticker")
+                .Select(row => new MarketSecurity(row.ticker, row.name ?? string.Empty))
+                .ToList();
         }
 
         public List<MarketSecurity> SearchByTicker(string input)
