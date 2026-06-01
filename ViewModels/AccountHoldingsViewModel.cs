@@ -128,6 +128,14 @@ namespace Reckoner.ViewModels
         }
 
         [RelayCommand]
+        async Task OpenDrawdownSimulation()
+        {
+            if (_appState.CurrentAccount == null)
+                return;
+            await _appShellService.NavigateToAsync<DrawdownSimulationViewModel>();
+        }
+
+        [RelayCommand]
         async Task OpenSimulationCommand()
         {
             // 1) stash whatever data Performance needs in AppState

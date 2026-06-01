@@ -24,6 +24,12 @@ namespace Reckoner.Models
         BuyAndHold,
         MattStrategy
     }
+    public enum DrawdownStrategy
+    {
+        FixedAmount,
+        FixedPercentage,
+        GuardedFloor,
+    }
     public class ActivityHolder 
     {
     public ActivityHolder() { }
