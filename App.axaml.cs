@@ -84,6 +84,15 @@ namespace AvReckoner
                 return new SqliteMarketSecurityRepository(dbPath);
             });
 
+            services.AddSingleton<MarketDataSyncService>(sp =>
+            {
+                var settingsPath = AppPaths.UserFile("fipy_settings.json");
+                var settings = MarketDataSyncSettings.Load(settingsPath);
+                if (string.IsNullOrWhiteSpace(settings.FiPyExePath))
+                    settings.FiPyExePath = AppPaths.InstalledFile("fipy.exe");
+                return new MarketDataSyncService(AppPaths.UserFile("ReckonerDB.db"), settings);
+            });
+
             // Register services and viewmodels
             // AddSingleton is for services you want one instance of.
             services.AddSingleton<IUiThreadDispatcher, AvaloniaUiDispatcher>();
@@ -104,6 +113,7 @@ namespace AvReckoner
             services.AddTransient<ClientWelcomeViewModel>();
             services.AddTransient<InvestmentPerformanceViewModel>();
             services.AddTransient<DrawdownSimulationViewModel>();
+            services.AddTransient<MarketDataAdminViewModel>();
 
             // 3. Build the IServiceProvider from the ServiceCollection.
             Services = services.BuildServiceProvider();

@@ -48,6 +48,13 @@
                     Content="⚙️ Settings"
                     FontSize="18" />
 
+                <Button
+                    Width="250"
+                    Classes="primary"
+                    Command="{Binding NavigateToAdminCommand}"
+                    Content="🗄 Market Data"
+                    FontSize="18" />
+
 
 
             </StackPanel>

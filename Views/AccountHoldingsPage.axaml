@@ -4,6 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:mod="clr-namespace:Reckoner.Models"
+    xmlns:svc="clr-namespace:Reckoner.Services"
     xmlns:vm="clr-namespace:Reckoner.ViewModels"
     x:Name="RootPage"
     x:DataType="vm:AccountHoldingsViewModel">
@@ -115,6 +116,58 @@
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>
+
+            <!--  Search Online: appears when the local list has no matches  -->
+            <Button
+                HorizontalAlignment="Center"
+                Classes="primary"
+                Command="{Binding SearchOnlineCommand}"
+                Content="Search Online"
+                IsEnabled="{Binding !IsDownloading}"
+                IsVisible="{Binding CanSearchOnline}" />
+
+            <!--  Results from Yahoo Finance via fiPy  -->
+            <ListBox
+                Width="300"
+                MaxHeight="120"
+                Margin="0,5,0,0"
+                IsVisible="{Binding HasExternalResults}"
+                ItemsSource="{Binding ExternalResults}"
+                SelectedItem="{Binding SelectedExternalResult, Mode=TwoWay}"
+                SelectionMode="Single">
+                <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="svc:ExternalSecurityResult">
+                        <Border
+                            Margin="5"
+                            Padding="5"
+                            CornerRadius="6">
+                            <StackPanel>
+                                <TextBlock
+                                    FontWeight="Bold"
+                                    Foreground="Black"
+                                    Text="{Binding Ticker}" />
+                                <TextBlock FontSize="12" Text="{Binding Name}" />
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <!--  Download the selected external result  -->
+            <Button
+                HorizontalAlignment="Center"
+                Classes="primary"
+                Command="{Binding DownloadTickerCommand}"
+                Content="Download History"
+                IsEnabled="{Binding !IsDownloading}"
+                IsVisible="{Binding CanDownload}" />
+
+            <!--  Progress / error message  -->
+            <TextBlock
+                HorizontalAlignment="Center"
+                FontSize="12"
+                IsVisible="{Binding HasStatusMessage}"
+                Text="{Binding DownloadStatus}" />
         </StackPanel>
 
         <!--  Row 2: Holdings Table (fills remaining space, scrolls)  -->

@@ -25,6 +25,20 @@ namespace Reckoner.Repositories
                 .ToList();
         }
 
+        public List<MarketSecurityRecord> GetAllWithDetails()
+        {
+            using var conn = new SqliteConnection(_connectionString);
+            return conn.Query<MarketSecurityRecord>(@"
+                SELECT ticker        AS TickerSymbol,
+                       name          AS Name,
+                       earliest_date AS EarliestDate,
+                       latest_date   AS LatestDate,
+                       modified_date AS ModifiedDate
+                FROM market_securities
+                ORDER BY ticker")
+                .ToList();
+        }
+
         public List<MarketSecurity> SearchByTicker(string input)
         {
             using var conn = new SqliteConnection(_connectionString);

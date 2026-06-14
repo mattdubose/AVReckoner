@@ -24,6 +24,12 @@ namespace Reckoner.ViewModels
         }
 
         [RelayCommand]
+        private async Task NavigateToAdmin()
+        {
+            await _appShellService.Navigation.NavigateToAsync<MarketDataAdminViewModel>();
+        }
+
+        [RelayCommand]
         private async Task NavigateToSettings()
         {
             throw new NotImplementedException();

@@ -9,6 +9,7 @@ namespace Reckoner.Repositories
     public interface IMarketSecurityRepository
     {
         public List<MarketSecurity> GetAll();
+        public List<MarketSecurityRecord> GetAllWithDetails();
         public List<MarketSecurity> SearchByTickerOrName(string input);
         public List<MarketSecurity> SearchByTicker(string input);
     }
