@@ -87,6 +87,8 @@ namespace Reckoner.Repositories
       return GetInfoBetweenDates(start, endDate);
     }
 
+    public bool HasAnyDataOnOrBefore(DateTime date) => _dbSource.HasAnyDataOnOrBefore(date);
+
     public MarketInterfaceErrors GetLastError() => _dbSource.GetLastError();
     public void ClearErrors() => _dbSource.ClearErrors();
   }

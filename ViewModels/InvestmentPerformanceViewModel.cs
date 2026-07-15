@@ -31,11 +31,23 @@ namespace Reckoner.ViewModels
         [ObservableProperty]
         private bool simulationHasResults = false;
 
+        [ObservableProperty]
+        private string simulationError = string.Empty;
+        [ObservableProperty]
+        private bool hasSimulationError;
+
         private void SimSettingsVM_PropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
             // Any setting change invalidates the current results
             SimulationHasResults = false;
+            SetSimulationError(string.Empty);
             TogglePlayPauseCommand.NotifyCanExecuteChanged();
+        }
+
+        private void SetSimulationError(string message)
+        {
+            SimulationError = message;
+            HasSimulationError = !string.IsNullOrEmpty(message);
         }
 
         private bool CanTogglePlayPause() => SimSettingsVM?.IsValid == true && !SimulationHasResults;
@@ -151,6 +163,7 @@ namespace Reckoner.ViewModels
         {
             IsSimulationRunning = true;
             _quitSimulation = false;
+            SetSimulationError(string.Empty);
             XAxes = new Axis[]
             {
                 new DateTimeAxis(TimeSpan.FromDays(1), date =>
@@ -185,9 +198,20 @@ namespace Reckoner.ViewModels
                     series.Values = new ObservableCollection<DateTimePoint>();
             });
 
-            // Pre-warm all asset caches for the full sim range — one DB query per asset
-            await Task.Run(() => _accountService.PreloadForSimulation(
-                startDate.GetValueOrDefault(), endDate.GetValueOrDefault()));
+            // Pre-warm all asset caches for the full sim range — one DB query per asset,
+            // and fail fast if any held ticker has no price data at all.
+            try
+            {
+                await Task.Run(() => _accountService.PreloadForSimulation(
+                    startDate.GetValueOrDefault(), endDate.GetValueOrDefault()));
+            }
+            catch (MissingMarketDataException ex)
+            {
+                SetSimulationError(ex.Message);
+                IsSimulationRunning = false;
+                IsPaused = true;
+                return;
+            }
 
             // Run the simulation loop in a background thread
             await Task.Run(async () =>
@@ -232,10 +256,11 @@ namespace Reckoner.ViewModels
 
                     if (allPoints.Count % effectiveBatch == 0)
                     {
-                        // Assign the same list reference — no copy.
-                        // Safe because we await the dispatcher, so the background thread
-                        // is idle while LiveCharts reads the list for this render cycle.
-                        var toRender = allPoints;
+                        // Hand LiveCharts a private snapshot, not the live list.
+                        // series.Values = ... only queues the update; LiveCharts' own
+                        // throttled render pass reads it later, by which point this
+                        // background loop may already be appending to allPoints again.
+                        var toRender = new List<DateTimePoint>(allPoints);
                         await _dispatcher.ExecuteOnMainThreadAsync(() => series.Values = toRender);
                         if (delay > TimeSpan.Zero)
                             await Task.Delay(delay);
@@ -243,7 +268,7 @@ namespace Reckoner.ViewModels
                 }
 
                 // Final flush
-                var finalPoints = allPoints;
+                var finalPoints = new List<DateTimePoint>(allPoints);
                 await _dispatcher.ExecuteOnMainThreadAsync(() => series.Values = finalPoints);
             });
 

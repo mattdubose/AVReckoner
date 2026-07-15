@@ -12,5 +12,7 @@ namespace Reckoner.Repositories
     List<DailyEquityInfo> GetInfoBetweenDates(DateTime startDate, DateTime endDate);
     List<DailyEquityInfo> GetLastXDays(DateTime endDate, int NumberToGet);
     DailyEquityInfo? GetLatestDaysInfo(DateTime startDate, int MaxLookback);
+    /// <summary>True if at least one price row exists on or before <paramref name="date"/>, regardless of window/cache state.</summary>
+    bool HasAnyDataOnOrBefore(DateTime date) => true;
   }
 }

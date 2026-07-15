@@ -34,6 +34,8 @@ namespace Reckoner.Services
         _marketInterface.PreloadRange(TickerSymbol, start, end);
         _corpActionRepo.GetDividends(start, end); // warms the corp action cache
     }
+
+    public bool HasAnyPriceData(DateTime onOrBefore) => _marketInterface.HasDataOnOrBefore(onOrBefore);
     public decimal BuyInDollars(decimal Dollars)
     {
       decimal curPrice = _marketInterface.GetCurrentPrice(TickerSymbol);

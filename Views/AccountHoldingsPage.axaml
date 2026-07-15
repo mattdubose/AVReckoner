@@ -61,12 +61,18 @@
                     Classes="primary"
                     Command="{Binding SaveChangesCommand}"
                     Content="Save Changes"
+                    IsEnabled="{Binding CanSaveChanges}"
                     IsVisible="{Binding IsEditMode}" />
 
                 <Button Classes="primary" Command="{Binding OpenSimulationCommandCommand}" Content="Simulate Contributions" />
                 <Button Classes="primary" Command="{Binding OpenDrawdownSimulationCommand}" Content="Simulate Drawdown" />
 
             </StackPanel>
+
+            <TextBlock
+                Foreground="#D9534F"
+                IsVisible="{Binding !CanSaveChanges}"
+                Text="{Binding ContributionValidationMessage}" />
         </StackPanel>
 
         <!--  Row 1: Search + Add (only when editing)  -->

@@ -6,6 +6,8 @@ using Reckoner.Services;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -29,6 +31,8 @@ namespace Reckoner.ViewModels
         [ObservableProperty] decimal assetBalance;
         [ObservableProperty] string accountNumber;
         [ObservableProperty] bool isEditMode;
+        [ObservableProperty] bool canSaveChanges = true;
+        [ObservableProperty] string contributionValidationMessage = string.Empty;
 
         // Online search / download
         [ObservableProperty] ObservableCollection<ExternalSecurityResult> externalResults = new();
@@ -58,6 +62,7 @@ namespace Reckoner.ViewModels
             _accountRepository = accountRepository;
             _marketDataSync = marketDataSync;
             holdings = new ObservableCollection<SecurityHolding>();
+            holdings.CollectionChanged += Holdings_CollectionChanged;
             filteredStocks = new ObservableCollection<MarketSecurity>();
             _allSecurities = _marketSecurityRepository.GetAll();
             _myAccount = _appState.CurrentAccount;
@@ -109,6 +114,42 @@ namespace Reckoner.ViewModels
                 }
                 Holdings.Add(h);
             }
+            RevalidateContributions();
+        }
+
+        private void Holdings_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            if (e.OldItems != null)
+                foreach (SecurityHolding item in e.OldItems)
+                    item.PropertyChanged -= Holding_PropertyChanged;
+            if (e.NewItems != null)
+                foreach (SecurityHolding item in e.NewItems)
+                    item.PropertyChanged += Holding_PropertyChanged;
+            RevalidateContributions();
+        }
+
+        private void Holding_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(SecurityHolding.ContributionPercentageX100)
+                || e.PropertyName == nameof(SecurityHolding.ContributionPercentage))
+                RevalidateContributions();
+        }
+
+        private void RevalidateContributions()
+        {
+            if (!IsEditMode || Holdings.Count == 0)
+            {
+                CanSaveChanges = true;
+                ContributionValidationMessage = string.Empty;
+                return;
+            }
+
+            decimal totalPercent = Holdings.Sum(h => h.ContributionPercentage ?? 0m) * 100m;
+            bool isValid = Math.Abs(totalPercent - 100m) < 0.01m;
+            CanSaveChanges = isValid;
+            ContributionValidationMessage = isValid
+                ? string.Empty
+                : $"Contribution percentages must total 100% (currently {totalPercent:0.##}%).";
         }
 
         [RelayCommand]
@@ -134,6 +175,7 @@ namespace Reckoner.ViewModels
                 FilteredStocks.Clear();
                 IsAddButtonClickable = false;
             }
+            RevalidateContributions();
         }
 
         private async Task SaveChangesAsync()
@@ -144,6 +186,10 @@ namespace Reckoner.ViewModels
                 .ToList();
             foreach (var r in toRemove)
                 Holdings.Remove(r);
+
+            RevalidateContributions();
+            if (!CanSaveChanges) return;
+
             _myAccount.Assets = Holdings.ToList();
             await _accountRepository.UpdateAccountAsync(_myAccount);
             IsEditMode = false;
@@ -184,11 +230,12 @@ namespace Reckoner.ViewModels
             foreach (var m in matches)
                 FilteredStocks.Add(m);
 
+            // Enable Add for an unambiguous match, but don't auto-select it —
+            // that used to rewrite SearchText mid-keystroke via OnSelectedStockChanged,
+            // which made it impossible to type a different ticker that shared a substring.
             IsAddButtonClickable = FilteredStocks.Count == 1;
-            if (IsAddButtonClickable)
-                SelectedStock = FilteredStocks[0];
 
-            CanSearchOnline = FilteredStocks.Count == 0 && !IsDownloading;
+            CanSearchOnline = !IsDownloading;
         }
 
         partial void OnSelectedStockChanged(MarketSecurity value)
@@ -206,8 +253,9 @@ namespace Reckoner.ViewModels
 
         private async Task AddSelectedItemAsync()
         {
-            if (!IsEditMode || SelectedStock == null) return;
-            var newHolding = new SecurityHolding(SelectedStock)
+            var stock = SelectedStock ?? (FilteredStocks.Count == 1 ? FilteredStocks[0] : null);
+            if (!IsEditMode || stock == null) return;
+            var newHolding = new SecurityHolding(stock)
             {
                 NumberOfShares = 0,
                 ContributionPercentage = 0m

@@ -8,7 +8,7 @@
     x:DataType="vm:MarketDataAdminViewModel">
 
     <Border Classes="page-card">
-        <Grid Margin="16" RowDefinitions="Auto,Auto,Auto,*">
+        <Grid Margin="16" RowDefinitions="Auto,Auto,Auto,Auto,*">
 
             <!--  Row 0: Header bar  -->
             <Grid Grid.Row="0" Margin="0,0,0,12" ColumnDefinitions="Auto,*,Auto,Auto">
@@ -151,8 +151,53 @@
                 </StackPanel>
             </Border>
 
-            <!--  Row 3: Securities table  -->
-            <Grid Grid.Row="3" RowDefinitions="Auto,*">
+            <!--  Row 3: Suggested tickers  -->
+            <Border
+                Grid.Row="3"
+                Margin="0,0,0,12"
+                Padding="12"
+                BorderBrush="#DDD"
+                BorderThickness="1"
+                CornerRadius="6"
+                IsVisible="{Binding SuggestedTickers.Count}">
+                <StackPanel Spacing="8">
+
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock
+                            Grid.Column="0"
+                            VerticalAlignment="Center"
+                            FontWeight="SemiBold"
+                            Text="Suggested Tickers" />
+                        <Button
+                            Grid.Column="1"
+                            Classes="primary"
+                            Command="{Binding LoadSelectedSuggestedTickersCommand}"
+                            Content="Load Selected"
+                            IsEnabled="{Binding !IsUpdating}" />
+                    </Grid>
+
+                    <ItemsControl ItemsSource="{Binding SuggestedTickers}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:SuggestedTickerItem">
+                                <CheckBox
+                                    Margin="0,0,16,4"
+                                    Content="{Binding Ticker}"
+                                    IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                    IsEnabled="{Binding !IsAlreadyLoaded}"
+                                    ToolTip.Tip="{Binding Name}" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <!--  Row 4: Securities table  -->
+            <Grid Grid.Row="4" RowDefinitions="Auto,*">
 
                 <!--  Column headers  -->
                 <Border Grid.Row="0" Margin="8,0" Padding="8,6" Background="#EFEFEF">

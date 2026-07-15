@@ -55,9 +55,10 @@ namespace Reckoner.ViewModels
                 FilteredStocks.Add(match);
 
             HasResults = FilteredStocks.Count > 0;
+            // Enable Add for an unambiguous match, but don't auto-select it —
+            // that used to rewrite SearchText mid-keystroke via OnSelectedStockChanged,
+            // which made it impossible to type a different ticker that shared a substring.
             IsAddButtonClickable = FilteredStocks.Count == 1;
-            if (IsAddButtonClickable)
-                SelectedStock = FilteredStocks[0];
         }
 
         partial void OnSelectedStockChanged(MarketSecurity? value)
@@ -73,9 +74,10 @@ namespace Reckoner.ViewModels
         [RelayCommand]
         private void AddSelectedItem()
         {
-            if (SelectedStock == null) return;
-    
-            var newHolding = new SecurityHolding(SelectedStock)
+            var stock = SelectedStock ?? (FilteredStocks.Count == 1 ? FilteredStocks[0] : null);
+            if (stock == null) return;
+
+            var newHolding = new SecurityHolding(stock)
             {
                 NumberOfShares = 0,
                 ContributionPercentage = 0m

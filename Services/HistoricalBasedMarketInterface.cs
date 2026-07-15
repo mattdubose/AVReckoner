@@ -88,12 +88,12 @@ namespace Reckoner.Services
       }
 
       DailyEquityInfo? stockData = _historicalDataIf.GetLatestDaysInfo(today, 300);
-      if (stockData == null)
+      if (stockData == null || !stockData.Close.HasValue)
       {
         return (decimal)_historicalDataIf.GetLastError();
       }
       return (decimal)stockData.Close;
-      
+
     }
 
     public void PreloadRange(string tickerSymbol, DateTime start, DateTime end)
@@ -101,6 +101,8 @@ namespace Reckoner.Services
       // A single GetInfoBetweenDates call fills the caching layer for the entire range
       _historicalDataIf.GetInfoBetweenDates(start, end);
     }
+
+    public bool HasDataOnOrBefore(DateTime date) => _historicalDataIf.HasAnyDataOnOrBefore(date);
 
     public MarketInterfaceErrors GetLastError()
     {

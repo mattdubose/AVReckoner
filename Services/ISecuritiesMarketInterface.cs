@@ -31,5 +31,7 @@ public interface IMarketInterfaceErrors
       public decimal GetLatestPrice(string tickerSymbol);
       /// <summary>Pre-warms the underlying data cache for the full simulation range.</summary>
       public void PreloadRange(string tickerSymbol, DateTime start, DateTime end) { }
+      /// <summary>True if there's at least one price row on or before <paramref name="date"/>.</summary>
+      public bool HasDataOnOrBefore(DateTime date) => true;
   }
 }

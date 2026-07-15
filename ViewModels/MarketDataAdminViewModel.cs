@@ -1,7 +1,11 @@
+using AvReckoner;
+
 namespace Reckoner.ViewModels
 {
     public partial class MarketDataAdminViewModel : BaseViewModel
     {
+        private record SuggestedTickerDto(string Ticker, string Name);
+
         private readonly IMarketSecurityRepository _repo;
         private readonly MarketDataSyncService _sync;
         private readonly List<MarketSecurity> _allSecurities = new();
@@ -9,6 +13,9 @@ namespace Reckoner.ViewModels
         // Securities table
         [ObservableProperty] ObservableCollection<MarketSecurityRecord> securities = new();
         [ObservableProperty] string mostRecentDate = "—";
+
+        // Suggested tickers (checkbox list)
+        [ObservableProperty] ObservableCollection<SuggestedTickerItem> suggestedTickers = new();
 
         // Update All
         [ObservableProperty] bool isUpdating;
@@ -40,6 +47,7 @@ namespace Reckoner.ViewModels
         {
             await base.InitializeAsync();
             LoadSecurities();
+            LoadSuggestedTickers();
         }
 
         private void LoadSecurities()
@@ -62,6 +70,88 @@ namespace Reckoner.ViewModels
             MostRecentDate = latest == default
                 ? "No data yet"
                 : latest.ToString("MMMM d, yyyy");
+
+            SyncSuggestedTickerLoadedFlags();
+        }
+
+        private void SyncSuggestedTickerLoadedFlags()
+        {
+            var loadedTickers = _allSecurities
+                .Select(s => s.TickerSymbol)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var item in SuggestedTickers)
+                item.IsAlreadyLoaded = loadedTickers.Contains(item.Ticker);
+        }
+
+        private void LoadSuggestedTickers()
+        {
+            SuggestedTickers.Clear();
+            var path = AppPaths.InstalledFile("Data/SuggestedTickers.json");
+            if (!File.Exists(path)) return;
+
+            var dtos = JsonSerializer.Deserialize<List<SuggestedTickerDto>>(
+                File.ReadAllText(path),
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new();
+
+            var loadedTickers = _allSecurities
+                .Select(s => s.TickerSymbol)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var dto in dtos)
+            {
+                SuggestedTickers.Add(new SuggestedTickerItem
+                {
+                    Ticker = dto.Ticker,
+                    Name = dto.Name,
+                    IsAlreadyLoaded = loadedTickers.Contains(dto.Ticker)
+                });
+            }
+        }
+
+        [RelayCommand]
+        async Task LoadSelectedSuggestedTickers()
+        {
+            var selected = SuggestedTickers.Where(t => t.IsSelected && !t.IsAlreadyLoaded).ToList();
+            if (selected.Count == 0)
+            {
+                AppendLog("No suggested tickers selected.");
+                return;
+            }
+            if (!_sync.IsConfigured)
+            {
+                AppendLog("fipy.exe not found. Build the fiPy project first.");
+                return;
+            }
+
+            IsUpdating = true;
+            AppendLog($"Loading {selected.Count} suggested ticker(s) — {DateTime.Now:t}");
+
+            var progress = new Progress<string>(line =>
+            {
+                if (!string.IsNullOrWhiteSpace(line))
+                    AppendLog(line);
+            });
+
+            foreach (var item in selected)
+            {
+                try
+                {
+                    var result = await _sync.AddTickerAsync(item.Ticker, progress);
+                    if (result.Success)
+                        item.IsAlreadyLoaded = true;
+                    else
+                        AppendLog($"Failed to load {item.Ticker}: {result.ErrorOutput.Trim()}");
+                }
+                catch (Exception ex)
+                {
+                    AppendLog($"Error loading {item.Ticker}: {ex.Message}");
+                }
+            }
+
+            LoadSecurities();
+            AppendLog("✓ Done loading suggested tickers.");
+            IsUpdating = false;
         }
 
         [RelayCommand]
@@ -124,7 +214,9 @@ namespace Reckoner.ViewModels
             foreach (var m in matches)
                 FilteredStocks.Add(m);
 
-            CanSearchOnline = FilteredStocks.Count == 0 && !IsDownloading;
+            // A partial local match (e.g. "AAPL" while typing "AAPD") shouldn't hide
+            // Search Online — only an empty box should.
+            CanSearchOnline = !IsDownloading;
         }
 
         partial void OnSelectedExternalResultChanged(ExternalSecurityResult? value)

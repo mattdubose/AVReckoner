@@ -128,6 +128,14 @@ namespace Reckoner.Repositories
 
 
 
+        public bool HasAnyDataOnOrBefore(DateTime date)
+        {
+            using var conn = Connection;
+            return conn.ExecuteScalar<long>(
+                "SELECT EXISTS(SELECT 1 FROM price_history WHERE ticker = @ticker AND date <= @date)",
+                new { ticker = _ticker, date }) == 1;
+        }
+
         public MarketInterfaceErrors GetLastError() => _lastError;
         public void ClearErrors() => _lastError = MarketInterfaceErrors.NoError;
     }

@@ -27,8 +27,15 @@ namespace Reckoner.Services
     /// </summary>
     public void PreloadForSimulation(DateTime start, DateTime end)
     {
+        var missingData = new List<string>();
         foreach (var asset in Assets)
+        {
             asset.Preload(start, end);
+            if (!asset.HasAnyPriceData(end))
+                missingData.Add(asset.TickerSymbol);
+        }
+        if (missingData.Count > 0)
+            throw new MissingMarketDataException(missingData);
     }
     bool CanPerformTradeActionToday()
     {
