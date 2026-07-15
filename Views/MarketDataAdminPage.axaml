@@ -1,0 +1,201 @@
+<UserControl
+    x:Class="Reckoner.Views.MarketDataAdminPage"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:mod="clr-namespace:Reckoner.Models"
+    xmlns:svc="clr-namespace:Reckoner.Services"
+    xmlns:vm="clr-namespace:Reckoner.ViewModels"
+    x:DataType="vm:MarketDataAdminViewModel">
+
+    <Border Classes="page-card">
+        <Grid Margin="16" RowDefinitions="Auto,Auto,Auto,*">
+
+            <!--  Row 0: Header bar  -->
+            <Grid Grid.Row="0" Margin="0,0,0,12" ColumnDefinitions="Auto,*,Auto,Auto">
+
+                <TextBlock
+                    Grid.Column="0"
+                    VerticalAlignment="Center"
+                    FontSize="20"
+                    FontWeight="Bold"
+                    Text="Market Data" />
+
+                <TextBlock
+                    Grid.Column="1"
+                    Margin="16,0,0,0"
+                    VerticalAlignment="Center"
+                    FontSize="14"
+                    Opacity="0.65"
+                    Text="{Binding MostRecentDate, StringFormat='Most recent data: {0}'}" />
+
+                <Button
+                    Grid.Column="2"
+                    Margin="0,0,8,0"
+                    Classes="primary"
+                    Command="{Binding UpdateAllCommand}"
+                    Content="Update All"
+                    IsEnabled="{Binding !IsUpdating}" />
+
+                <Button
+                    Grid.Column="3"
+                    Classes="primary"
+                    Command="{Binding GoBackCommand}"
+                    Content="← Back" />
+            </Grid>
+
+            <!--  Row 1: Update progress log  -->
+            <Border
+                Grid.Row="1"
+                Margin="0,0,0,12"
+                MaxHeight="120"
+                Background="#1A000000"
+                CornerRadius="6"
+                IsVisible="{Binding HasUpdateLog}">
+                <ScrollViewer>
+                    <TextBlock
+                        Margin="8"
+                        FontFamily="Consolas,Courier New,monospace"
+                        FontSize="12"
+                        Text="{Binding UpdateLog}"
+                        TextWrapping="Wrap" />
+                </ScrollViewer>
+            </Border>
+
+            <!--  Row 2: Add ticker section  -->
+            <Border
+                Grid.Row="2"
+                Margin="0,0,0,12"
+                Padding="12"
+                BorderBrush="#DDD"
+                BorderThickness="1"
+                CornerRadius="6">
+                <StackPanel HorizontalAlignment="Center" Spacing="8">
+
+                    <TextBlock
+                        HorizontalAlignment="Center"
+                        FontWeight="SemiBold"
+                        Text="Add a Ticker" />
+
+                    <StackPanel HorizontalAlignment="Center" Orientation="Horizontal" Spacing="8">
+                        <TextBox
+                            Width="220"
+                            Background="White"
+                            Foreground="Black"
+                            Text="{Binding SearchText, Mode=TwoWay}"
+                            Watermark="Type ticker or company name…" />
+
+                        <Button
+                            VerticalAlignment="Center"
+                            Classes="primary"
+                            Command="{Binding SearchOnlineCommand}"
+                            Content="Search Online"
+                            IsEnabled="{Binding !IsDownloading}"
+                            IsVisible="{Binding CanSearchOnline}" />
+                    </StackPanel>
+
+                    <!--  Local matches (already in DB)  -->
+                    <ListBox
+                        Width="300"
+                        MaxHeight="100"
+                        IsVisible="{Binding FilteredStocks.Count}"
+                        ItemsSource="{Binding FilteredStocks}"
+                        SelectionMode="Single">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="mod:MarketSecurity">
+                                <StackPanel Margin="4" Orientation="Horizontal" Spacing="8">
+                                    <TextBlock FontWeight="Bold" Text="{Binding TickerSymbol}" />
+                                    <TextBlock Opacity="0.7" Text="{Binding Name}" />
+                                    <TextBlock
+                                        FontSize="11"
+                                        Foreground="Green"
+                                        Text="(already in DB)" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <!--  External results from Yahoo  -->
+                    <ListBox
+                        Width="300"
+                        MaxHeight="120"
+                        IsVisible="{Binding HasExternalResults}"
+                        ItemsSource="{Binding ExternalResults}"
+                        SelectedItem="{Binding SelectedExternalResult, Mode=TwoWay}"
+                        SelectionMode="Single">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="svc:ExternalSecurityResult">
+                                <Border Margin="4" Padding="5" CornerRadius="4">
+                                    <StackPanel>
+                                        <TextBlock FontWeight="Bold" Text="{Binding Ticker}" />
+                                        <TextBlock FontSize="12" Text="{Binding Name}" />
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <Button
+                        HorizontalAlignment="Center"
+                        Classes="primary"
+                        Command="{Binding DownloadTickerCommand}"
+                        Content="Download History"
+                        IsEnabled="{Binding !IsDownloading}"
+                        IsVisible="{Binding CanDownload}" />
+
+                    <TextBlock
+                        HorizontalAlignment="Center"
+                        FontSize="12"
+                        IsVisible="{Binding HasStatusMessage}"
+                        Text="{Binding DownloadStatus}" />
+
+                </StackPanel>
+            </Border>
+
+            <!--  Row 3: Securities table  -->
+            <Grid Grid.Row="3" RowDefinitions="Auto,*">
+
+                <!--  Column headers  -->
+                <Border Grid.Row="0" Margin="8,0" Padding="8,6" Background="#EFEFEF">
+                    <Grid ColumnDefinitions="1.5*,3*,1.5*,1.5*">
+                        <TextBlock Grid.Column="0" FontWeight="Bold" Text="Ticker" />
+                        <TextBlock Grid.Column="1" FontWeight="Bold" Text="Name" />
+                        <TextBlock Grid.Column="2" FontWeight="Bold" Text="Earliest Data" />
+                        <TextBlock Grid.Column="3" FontWeight="Bold" Text="Latest Data" />
+                    </Grid>
+                </Border>
+
+                <!--  Rows  -->
+                <ScrollViewer Grid.Row="1">
+                    <ItemsControl ItemsSource="{Binding Securities}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="mod:MarketSecurityRecord">
+                                <Border Margin="8,2" Padding="8,4">
+                                <Grid ColumnDefinitions="1.5*,3*,1.5*,1.5*">
+                                    <TextBlock
+                                        Grid.Column="0"
+                                        VerticalAlignment="Center"
+                                        FontWeight="SemiBold"
+                                        Text="{Binding TickerSymbol}" />
+                                    <TextBlock
+                                        Grid.Column="1"
+                                        VerticalAlignment="Center"
+                                        Text="{Binding Name}" />
+                                    <TextBlock
+                                        Grid.Column="2"
+                                        VerticalAlignment="Center"
+                                        Text="{Binding EarliestDate, StringFormat='{}{0:MM/dd/yyyy}'}" />
+                                    <TextBlock
+                                        Grid.Column="3"
+                                        VerticalAlignment="Center"
+                                        Text="{Binding LatestDate, StringFormat='{}{0:MM/dd/yyyy}'}" />
+                                </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
+
+        </Grid>
+    </Border>
+</UserControl>

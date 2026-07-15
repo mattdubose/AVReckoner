@@ -1,0 +1,185 @@
+<UserControl
+    x:Class="Reckoner.Views.DrawdownSimulationPage"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:Reckoner.Controls"
+    xmlns:local="clr-namespace:Reckoner.Converters"
+    xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.Avalonia;assembly=LiveChartsCore.SkiaSharpView.Avalonia"
+    xmlns:model="clr-namespace:Reckoner.Models"
+    xmlns:vm="clr-namespace:Reckoner.ViewModels"
+    x:DataType="vm:DrawdownSimulationViewModel">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <local:DateTimeOffsetToDateTimeConverter x:Key="DateOnlyConverter" />
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid RowDefinitions="Auto, *">
+
+        <!--  Controls  -->
+        <StackPanel Grid.Row="0" Margin="20" Spacing="8">
+
+            <!--  Starting Balance  -->
+            <TextBlock
+                HorizontalAlignment="Center"
+                FontSize="16"
+                FontWeight="Bold"
+                Text="{Binding StartingBalance, StringFormat='Starting Balance: {0:C}'}" />
+
+            <!--  Holdings (read-only)  -->
+            <ScrollViewer HorizontalScrollBarVisibility="Auto">
+                <ItemsControl ItemsSource="{Binding Settings.Holdings}">
+                    <ItemsControl.Styles>
+                        <Style Selector="ContentPresenter:nth-child(1) TextBlock.pipe-separator">
+                            <Setter Property="IsVisible" Value="False" />
+                        </Style>
+                    </ItemsControl.Styles>
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="model:SecurityHolding">
+                            <StackPanel Orientation="Horizontal" Margin="0,0,16,0">
+                                <TextBlock
+                                    Classes="pipe-separator"
+                                    VerticalAlignment="Center"
+                                    Foreground="#AAAAAA"
+                                    FontSize="16"
+                                    Text="|"
+                                    Margin="0,0,16,2" />
+                                <StackPanel Orientation="Vertical" Spacing="2">
+                                    <TextBlock
+                                        HorizontalAlignment="Center"
+                                        FontWeight="Bold"
+                                        Text="{Binding TickerSymbol}" />
+                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                        <TextBlock VerticalAlignment="Center" Text="{Binding NumberOfShares, StringFormat='{}{0:N2} shares'}" />
+                                        <TextBlock VerticalAlignment="Center" Foreground="#888888"
+                                                   Text="{Binding ContributionPercentageX100, StringFormat='({0:N1}%)'}" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+
+            <!--  Strategy + Floor  -->
+            <WrapPanel HorizontalAlignment="Center">
+                <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2">
+                    <Label VerticalAlignment="Center" FontSize="13" Content="Drawdown Strategy:" />
+                    <ComboBox
+                        VerticalAlignment="Center"
+                        ItemsSource="{Binding DrawdownStrategies}"
+                        SelectedItem="{Binding Settings.DrawdownStrategy}" />
+                </StackPanel>
+                <StackPanel
+                    IsVisible="{Binding IsFloorVisible}"
+                    Orientation="Horizontal"
+                    Spacing="6"
+                    Margin="0,2">
+                    <TextBlock VerticalAlignment="Center" Foreground="#AAAAAA" FontSize="16" Text="|" Margin="10,0,0,0" />
+                    <Label VerticalAlignment="Center" FontSize="13" Content="Floor Balance:" />
+                    <controls:DecimalInput
+                        ErrorMessage="Use format 10000.00"
+                        FormatString="0.00"
+                        Watermark="10000.00"
+                        Value="{Binding Settings.FloorBalance}" />
+                </StackPanel>
+            </WrapPanel>
+
+            <!--  Payout Amount + Frequency + Day  -->
+            <WrapPanel HorizontalAlignment="Center">
+                <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2">
+                    <Label VerticalAlignment="Center" FontSize="13" Content="Payout Amount:" />
+                    <controls:DecimalInput
+                        ErrorMessage="Use format 2000.00"
+                        FormatString="0.00"
+                        Watermark="2000.00"
+                        Value="{Binding Settings.PayoutAmount}" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2">
+                    <TextBlock VerticalAlignment="Center" Foreground="#AAAAAA" FontSize="16" Text="|" Margin="10,0,0,0" />
+                    <Label VerticalAlignment="Center" FontSize="13" Content="Payout Frequency:" />
+                    <ComboBox
+                        VerticalAlignment="Center"
+                        Foreground="Blue"
+                        ItemsSource="{Binding PayoutIntervals}"
+                        SelectedItem="{Binding Settings.PayoutInterval}" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2">
+                    <TextBlock VerticalAlignment="Center" Foreground="#AAAAAA" FontSize="16" Text="|" Margin="10,0,0,0" />
+                    <Label VerticalAlignment="Center" FontSize="13" Content="Day of Month:" />
+                    <TextBox
+                        Width="60"
+                        VerticalAlignment="Center"
+                        Text="{Binding Settings.PayoutDayOfMonth}"
+                        Watermark="1"
+                        ToolTip.Tip="Day of month to take payout" />
+                </StackPanel>
+            </WrapPanel>
+
+            <!--  Date Range  -->
+            <WrapPanel HorizontalAlignment="Center">
+                <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2">
+                    <Label VerticalAlignment="Center" FontSize="13" Content="Start Date:" />
+                    <DatePicker SelectedDate="{Binding Settings.StartDateOffset, Mode=TwoWay}" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2">
+                    <TextBlock VerticalAlignment="Center" Foreground="#AAAAAA" FontSize="16" Text="|" Margin="10,0,0,0" />
+                    <Label VerticalAlignment="Center" FontSize="13" Content="End Date:" />
+                    <DatePicker SelectedDate="{Binding Settings.EndDateOffset, Mode=TwoWay}" />
+                </StackPanel>
+            </WrapPanel>
+
+            <!--  Action Buttons  -->
+            <Border Padding="10" HorizontalAlignment="Center">
+                <StackPanel Orientation="Horizontal" Spacing="20">
+                    <Button
+                        Width="240"
+                        Height="40"
+                        Classes="primary"
+                        Command="{Binding RunSimulationCommand}"
+                        Content="▶ Run Drawdown Simulation"
+                        FontSize="16" />
+                    <Button
+                        Width="200"
+                        Height="40"
+                        Classes="primary"
+                        Command="{Binding CancelSimCommand}"
+                        Content="❌ Cancel"
+                        IsEnabled="{Binding IsSimulationRunning}"
+                        IsVisible="{Binding IsSimulationRunning}" />
+                    <Button
+                        Width="200"
+                        Height="40"
+                        Classes="primary"
+                        Command="{Binding ClearSimsCommand}"
+                        Content="Clear All Simulations" />
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+
+        <!--  Chart  -->
+        <Border
+            Grid.Row="1"
+            Margin="20,0,20,20"
+            Padding="5"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            Background="White"
+            BorderBrush="Gray"
+            BorderThickness="1"
+            CornerRadius="10">
+            <lvc:CartesianChart
+                Series="{Binding ListOfLines}"
+                XAxes="{Binding XAxes}"
+                ZoomMode="X" />
+        </Border>
+
+    </Grid>
+</UserControl>
