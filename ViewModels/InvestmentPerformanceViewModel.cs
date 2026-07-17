@@ -232,10 +232,12 @@ namespace Reckoner.ViewModels
 
                     if (allPoints.Count % effectiveBatch == 0)
                     {
-                        // Assign the same list reference — no copy.
-                        // Safe because we await the dispatcher, so the background thread
-                        // is idle while LiveCharts reads the list for this render cycle.
-                        var toRender = allPoints;
+                        // Snapshot a copy for the chart — LiveCharts renders asynchronously
+                        // even after the dispatcher call returns, so it can still be
+                        // enumerating this list while the background thread keeps appending
+                        // to allPoints. Sharing the reference caused a
+                        // "Collection was modified" exception under that race.
+                        var toRender = new List<DateTimePoint>(allPoints);
                         await _dispatcher.ExecuteOnMainThreadAsync(() => series.Values = toRender);
                         if (delay > TimeSpan.Zero)
                             await Task.Delay(delay);
@@ -243,7 +245,7 @@ namespace Reckoner.ViewModels
                 }
 
                 // Final flush
-                var finalPoints = allPoints;
+                var finalPoints = new List<DateTimePoint>(allPoints);
                 await _dispatcher.ExecuteOnMainThreadAsync(() => series.Values = finalPoints);
             });
 

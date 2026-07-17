@@ -76,7 +76,9 @@ namespace Reckoner.Services
       {
         return (decimal)stockData.Close;
       }
-      return (decimal)_historicalDataIf.GetLastError();
+      // No data for this date (e.g. past the end of the loaded history) — 0 is the
+      // codebase-wide "no valid price" sentinel; the error code itself is not a price.
+      return 0;
     }
 
     public decimal GetLatestPrice(string tickerSymbol)
@@ -90,7 +92,7 @@ namespace Reckoner.Services
       DailyEquityInfo? stockData = _historicalDataIf.GetLatestDaysInfo(today, 300);
       if (stockData == null)
       {
-        return (decimal)_historicalDataIf.GetLastError();
+        return 0;
       }
       return (decimal)stockData.Close;
       

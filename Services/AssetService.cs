@@ -13,8 +13,11 @@ namespace Reckoner.Services
     ICorporateActionProvider _corpActionRepo;
     Dictionary<DateTime, decimal> _dividends = new Dictionary<DateTime, decimal>();
 
-    // Per-day price cache — avoids redundant DB/cache lookups within the same simulated day
-    private DateTime _priceCacheDate = DateTime.MinValue;
+    // Per-day price cache — avoids redundant DB/cache lookups within the same simulated day.
+    // GetCurrentPrice and GetLatestPrice each need their own date gate: sharing one let a
+    // same-day call to either method "unlock" the other's stale cached value from a previous day.
+    private DateTime _currentPriceCacheDate = DateTime.MinValue;
+    private DateTime _latestPriceCacheDate = DateTime.MinValue;
     private decimal _cachedCurrentPrice = 0;
     private decimal _cachedLatestPrice = 0;
 
@@ -118,31 +121,37 @@ namespace Reckoner.Services
     internal decimal GetCurrentPrice()
     {
       var today = DateTimeService.GetInstance.GetCurrentDate();
-      if (today == _priceCacheDate && _cachedCurrentPrice > 0)
+      if (today == _currentPriceCacheDate && _cachedCurrentPrice > 0)
         return _cachedCurrentPrice;
 
       var price = _marketInterface.GetCurrentPrice(TickerSymbol);
       if (price > 0)
       {
-        _priceCacheDate = today;
+        _currentPriceCacheDate = today;
         _cachedCurrentPrice = price;
+        return price;
       }
-      return price;
+      // No data for today (e.g. simulation ran past the end of loaded history) —
+      // hold at the last known good price instead of propagating an invalid value.
+      return _cachedCurrentPrice;
     }
 
     internal decimal GetLatestPrice()
     {
       var today = DateTimeService.GetInstance.GetCurrentDate();
-      if (today == _priceCacheDate && _cachedLatestPrice > 0)
+      if (today == _latestPriceCacheDate && _cachedLatestPrice > 0)
         return _cachedLatestPrice;
 
       var price = _marketInterface.GetLatestPrice(TickerSymbol);
       if (price > 0)
       {
-        _priceCacheDate = today;
+        _latestPriceCacheDate = today;
         _cachedLatestPrice = price;
+        return price;
       }
-      return price;
+      // No data for today (e.g. simulation ran past the end of loaded history) —
+      // hold at the last known good price instead of propagating an invalid value.
+      return _cachedLatestPrice;
     }
   }
 }
