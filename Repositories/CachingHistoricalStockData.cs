@@ -54,8 +54,13 @@ namespace Reckoner.Repositories
 
     public DailyEquityInfo? GetLatestDaysInfo(DateTime startDate, int maxLookback)
     {
-      // If within cache, use O(1) dictionary lookups instead of triggering DB round-trips
-      if (startDate >= _cachedStart && startDate <= _cachedEnd)
+      // If the whole lookback range is within cache, use O(1) dictionary lookups
+      // instead of triggering DB round-trips. Checking only startDate here (and not
+      // the earliest date the loop below can reach) let the loop walk past
+      // _cachedStart and silently miss cached-but-unindexed-that-far-back data,
+      // returning null instead of falling back to the DB.
+      var earliestNeeded = startDate.AddDays(-(maxLookback - 1));
+      if (earliestNeeded >= _cachedStart && startDate <= _cachedEnd)
       {
         for (int i = 0; i < maxLookback; i++)
         {
