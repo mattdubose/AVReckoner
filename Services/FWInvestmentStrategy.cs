@@ -64,7 +64,8 @@ namespace Reckoner.Services
                 // If we haven't triggered a selloff, we can't evaluate for buyback.
                 return SuggestedAction.Sell;// SuggestedAction.Hold; // No trigger, so we can't evaluate for buyback.
             }
-            if  (TriggeredDate.HasValue && TriggeredDate.Value.AddDays(_configData.MaxDaysOutOfMarket) >= DateTime.Now)
+            var today = DateTimeService.GetInstance.GetCurrentDate();
+            if  (TriggeredDate.HasValue && today >= TriggeredDate.Value.AddDays(_configData.MaxDaysOutOfMarket))
             {
                 // If we have been out of the market for too long, we will buy back regardless of price.
                 Debug.WriteLine("Buying back because I've been out of the market too long.  it's stable I suppose, or low.");
@@ -123,7 +124,8 @@ namespace Reckoner.Services
                     }
                 }
             }
-            return SuggestedAction.Buy;
+            return SuggestedAction.Buy;/* wmd - was Hold, 
+                      but i'm seeing strange errors..  */
 
         }
         

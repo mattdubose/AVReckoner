@@ -43,23 +43,21 @@
                     Content="← Back" />
             </Grid>
 
-            <!--  Row 1: Update progress log  -->
-            <Border
+            <!--  Row 1: Update progress  -->
+            <StackPanel
                 Grid.Row="1"
                 Margin="0,0,0,12"
-                MaxHeight="120"
-                Background="#1A000000"
-                CornerRadius="6"
-                IsVisible="{Binding HasUpdateLog}">
-                <ScrollViewer>
-                    <TextBlock
-                        Margin="8"
-                        FontFamily="Consolas,Courier New,monospace"
-                        FontSize="12"
-                        Text="{Binding UpdateLog}"
-                        TextWrapping="Wrap" />
-                </ScrollViewer>
-            </Border>
+                Spacing="4"
+                IsVisible="{Binding IsUpdating}">
+                <ProgressBar
+                    Height="8"
+                    Maximum="100"
+                    Value="{Binding UpdateProgress}" />
+                <TextBlock
+                    FontSize="12"
+                    Opacity="0.75"
+                    Text="{Binding UpdateStatusText}" />
+            </StackPanel>
 
             <!--  Row 2: Add ticker section  -->
             <Border

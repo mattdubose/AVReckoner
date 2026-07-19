@@ -1,4 +1,5 @@
 using AvReckoner;
+using System.Text.RegularExpressions;
 
 namespace Reckoner.ViewModels
 {
@@ -21,6 +22,10 @@ namespace Reckoner.ViewModels
         [ObservableProperty] bool isUpdating;
         [ObservableProperty] string updateLog = string.Empty;
         [ObservableProperty] bool hasUpdateLog;
+        [ObservableProperty] double updateProgress;
+        [ObservableProperty] string updateStatusText = string.Empty;
+        private int _updateTotalTickers;
+        private int _updateCompletedTickers;
 
         // Add / Search Online (same pattern as AccountHoldingsPage)
         [ObservableProperty] string searchText = string.Empty;
@@ -125,6 +130,9 @@ namespace Reckoner.ViewModels
             }
 
             IsUpdating = true;
+            _updateTotalTickers = selected.Count;
+            _updateCompletedTickers = 0;
+            UpdateProgress = 0;
             AppendLog($"Loading {selected.Count} suggested ticker(s) — {DateTime.Now:t}");
 
             var progress = new Progress<string>(line =>
@@ -135,6 +143,7 @@ namespace Reckoner.ViewModels
 
             foreach (var item in selected)
             {
+                UpdateStatusText = $"Loading {item.Ticker}… ({_updateCompletedTickers + 1} of {_updateTotalTickers})";
                 try
                 {
                     var result = await _sync.AddTickerAsync(item.Ticker, progress);
@@ -147,9 +156,12 @@ namespace Reckoner.ViewModels
                 {
                     AppendLog($"Error loading {item.Ticker}: {ex.Message}");
                 }
+                _updateCompletedTickers++;
+                UpdateProgress = Math.Min(100, (double)_updateCompletedTickers / _updateTotalTickers * 100);
             }
 
             LoadSecurities();
+            UpdateStatusText = "Done loading suggested tickers.";
             AppendLog("✓ Done loading suggested tickers.");
             IsUpdating = false;
         }
@@ -166,27 +178,64 @@ namespace Reckoner.ViewModels
                 return;
             }
             IsUpdating = true;
+            _updateTotalTickers = 0;
+            _updateCompletedTickers = 0;
+            UpdateProgress = 0;
+            UpdateStatusText = "Starting update…";
             AppendLog($"Starting update — {DateTime.Now:t}");
 
             var progress = new Progress<string>(line =>
             {
-                if (!string.IsNullOrWhiteSpace(line))
-                    AppendLog(line);
+                if (string.IsNullOrWhiteSpace(line)) return;
+                AppendLog(line);
+                ParseUpdateAllProgressLine(line);
             });
 
             try
             {
                 var result = await _sync.UpdateAllAsync(progress);
                 AppendLog(result.Success ? "✓ Update complete." : $"Update finished with errors: {result.ErrorOutput.Trim()}");
+                UpdateStatusText = result.Success ? "Update complete." : "Update finished with errors.";
+                UpdateProgress = 100;
                 LoadSecurities();
             }
             catch (Exception ex)
             {
                 AppendLog($"Error: {ex.Message}");
+                UpdateStatusText = $"Error: {ex.Message}";
             }
             finally
             {
                 IsUpdating = false;
+            }
+        }
+
+        // fipy's "update" command streams: "INFO: Updating N ticker(s)", then per ticker
+        // "INFO: Processing TICKER" followed eventually by SUCCESS/WARNING/ERROR for it.
+        private void ParseUpdateAllProgressLine(string line)
+        {
+            if (line.StartsWith("INFO: Updating "))
+            {
+                var match = Regex.Match(line, @"INFO: Updating (\d+) ticker");
+                if (match.Success)
+                {
+                    _updateTotalTickers = int.Parse(match.Groups[1].Value);
+                    _updateCompletedTickers = 0;
+                    UpdateProgress = 0;
+                }
+            }
+            else if (line.StartsWith("INFO: Processing "))
+            {
+                var ticker = line["INFO: Processing ".Length..].Trim();
+                UpdateStatusText = _updateTotalTickers > 0
+                    ? $"Updating {ticker}… ({_updateCompletedTickers + 1} of {_updateTotalTickers})"
+                    : $"Updating {ticker}…";
+            }
+            else if (line.StartsWith("SUCCESS:") || line.StartsWith("WARNING:") || line.StartsWith("ERROR:"))
+            {
+                _updateCompletedTickers++;
+                if (_updateTotalTickers > 0)
+                    UpdateProgress = Math.Min(100, (double)_updateCompletedTickers / _updateTotalTickers * 100);
             }
         }
 

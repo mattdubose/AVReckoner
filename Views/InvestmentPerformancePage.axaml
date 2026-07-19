@@ -267,14 +267,16 @@
                         Classes="primary"
                         Command="{Binding CancelSimCommand}"
                         Content="❌ Cancel Simulation "
-                        IsEnabled="{Binding IsSimulationRunning}"
-                        IsVisible="{Binding IsSimulationRunning}" />
+                        IsEnabled="{Binding CanCancelSimulation}"
+                        IsVisible="{Binding CanCancelSimulation}" />
                     <Button
                         Width="240"
                         Height="40"
                         Classes="primary"
                         Command="{Binding ClearSimsCommand}"
-                        Content="Clear All Simulations" />
+                        Content="Clear All Simulations"
+                        IsEnabled="{Binding CanClearSimulation}"
+                        IsVisible="{Binding CanClearSimulation}" />
                 </StackPanel>
             </Border>
 

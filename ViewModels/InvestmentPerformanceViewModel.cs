@@ -101,6 +101,23 @@ namespace Reckoner.ViewModels
         [ObservableProperty]
         private bool isPaused = true;
 
+        // Cancel/Clear are only safe to offer once a running simulation has been paused —
+        // this stops the "meant to hit Pause, hit Cancel" mistake from wiping a run in progress.
+        public bool CanCancelSimulation => IsSimulationRunning && IsPaused;
+        public bool CanClearSimulation => !IsSimulationRunning || IsPaused;
+
+        partial void OnIsPausedChanged(bool value)
+        {
+            OnPropertyChanged(nameof(CanCancelSimulation));
+            OnPropertyChanged(nameof(CanClearSimulation));
+        }
+
+        partial void OnIsSimulationRunningChanged(bool value)
+        {
+            OnPropertyChanged(nameof(CanCancelSimulation));
+            OnPropertyChanged(nameof(CanClearSimulation));
+        }
+
         [ObservableProperty]
         private DrawSpeed selectedSpeed = DrawSpeed.Medium;
 
@@ -214,6 +231,7 @@ namespace Reckoner.ViewModels
             }
 
             // Run the simulation loop in a background thread
+            bool wasCancelled = false;
             await Task.Run(async () =>
             {
                 int totalDays = (int)((endDate ?? DateTime.Now) - (startDate ?? DateTime.Now)).TotalDays;
@@ -236,7 +254,7 @@ namespace Reckoner.ViewModels
                     if (_quitSimulation)
                     {
                         Debug.WriteLine("Simulation cancelled.");
-                        IsSimulationRunning = false;
+                        wasCancelled = true;
                         await _dispatcher.ExecuteOnMainThreadAsync(() => series.Values = new List<DateTimePoint>());
                         return;
                     }
@@ -272,11 +290,17 @@ namespace Reckoner.ViewModels
                 await _dispatcher.ExecuteOnMainThreadAsync(() => series.Values = finalPoints);
             });
 
-            _numLinesUsed++;
-            Debug.WriteLine($"Done Testing dates - points rendered: {numRendered}");
+            _quitSimulation = false;
             IsSimulationRunning = false;
             IsPaused = true;
-            SimulationHasResults = true;
+
+            if (!wasCancelled)
+            {
+                _numLinesUsed++;
+                Debug.WriteLine($"Done Testing dates - points rendered: {numRendered}");
+                SimulationHasResults = true;
+            }
+
             TogglePlayPauseCommand.NotifyCanExecuteChanged();
         }
 
