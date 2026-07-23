@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Linq;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Platform.Storage;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore;
 using LiveChartsCore.SkiaSharpView.Painting;
@@ -54,6 +57,8 @@ namespace Reckoner.ViewModels
 
         private Account _myAccount = new Account();
         Dictionary<int, SimulationSettings> _simSettings;
+        private readonly Dictionary<int, List<SimulationDayResult>> _simDayResults = new();
+        private readonly Dictionary<int, List<string>> _simTrackedTickers = new();
         bool _quitSimulation = false;
         [ObservableProperty]
         bool showSearchView = false;
@@ -84,8 +89,50 @@ namespace Reckoner.ViewModels
                 }
             });
             _numLinesUsed = 0;
+            _simDayResults.Clear();
+            _simTrackedTickers.Clear();
             SimulationHasResults = false;
             TogglePlayPauseCommand.NotifyCanExecuteChanged();
+            ExportToExcelCommand.NotifyCanExecuteChanged();
+        }
+
+        private bool CanExportToExcel() => _simDayResults.Count > 0;
+
+        [RelayCommand(CanExecute = nameof(CanExportToExcel))]
+        private async Task ExportToExcel(TopLevel root)
+        {
+            if (root is not Window owner) return;
+
+            var file = await owner.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+            {
+                Title = "Export Simulation Results",
+                SuggestedFileName = $"InvestmentSimulation_{DateTime.Now:yyyyMMdd_HHmmss}",
+                DefaultExtension = "xlsx",
+                FileTypeChoices = new[]
+                {
+                    new FilePickerFileType("Excel Workbook") { Patterns = new[] { "*.xlsx" } }
+                }
+            });
+            if (file == null) return;
+
+            var runs = _simDayResults
+                .OrderBy(kv => kv.Key)
+                .Select(kv => new SimulationRunExport
+                {
+                    Name = _simSettings.TryGetValue(kv.Key, out var s) ? s.Name : $"Run {kv.Key + 1}",
+                    Days = kv.Value,
+                    TrackedTickers = _simTrackedTickers.TryGetValue(kv.Key, out var t) ? t : new List<string>(),
+                })
+                .ToList();
+
+            try
+            {
+                await Task.Run(() => ExcelExportService.ExportRuns(file.Path.LocalPath, runs));
+            }
+            catch (Exception ex)
+            {
+                SetSimulationError($"Excel export failed: {ex.Message}");
+            }
         }
         public enum DrawSpeed
         {
@@ -120,6 +167,11 @@ namespace Reckoner.ViewModels
 
         [ObservableProperty]
         private DrawSpeed selectedSpeed = DrawSpeed.Medium;
+
+        // When off, the simulation still runs and results still get recorded for export,
+        // but the chart is never updated — useful for fast, repeated debug runs.
+        [ObservableProperty]
+        private bool renderChartDuringSimulation = true;
 
         public ObservableCollection<DrawSpeed> SpeedOptions { get; } =
             new(Enum.GetValues<DrawSpeed>());
@@ -232,6 +284,12 @@ namespace Reckoner.ViewModels
 
             // Run the simulation loop in a background thread
             bool wasCancelled = false;
+            var trackedTickers = simSettingsVM.ActiveSimSettings.Holdings
+                .Where(h => h.TrackInExport)
+                .Select(h => h.TickerSymbol)
+                .ToList();
+            var rawDataAssets = _accountService.Assets.Where(a => trackedTickers.Contains(a.TickerSymbol)).ToList();
+            var rawDataRunningHighs = new Dictionary<string, decimal>();
             await Task.Run(async () =>
             {
                 int totalDays = (int)((endDate ?? DateTime.Now) - (startDate ?? DateTime.Now)).TotalDays;
@@ -240,6 +298,7 @@ namespace Reckoner.ViewModels
 
                 // Grows with every computed point — we replace series.Values each flush (one render per batch)
                 var allPoints = new List<DateTimePoint>(totalDays);
+                var dayResults = new List<SimulationDayResult>(totalDays);
                 int dayIndex = 0;
 
                 Debug.WriteLine($"startDate: {startDate} endDate: {endDate}  totalDays: {totalDays}  batchSize: {batchSize}");
@@ -261,7 +320,34 @@ namespace Reckoner.ViewModels
 
                     managedTimeProvider.SetCurrentDate(date.GetValueOrDefault());
                     _accountService.RunDaysActivities();
-                    var y = Math.Round((double)_accountService.GetBalance(), 2);
+                    // GetBalance() only sums invested assets — add cash on the sidelines
+                    // (e.g. after a strategy sell-off) so this reflects the true account value.
+                    decimal cashToday = _accountService.GetAccount().CashBalance;
+                    decimal balanceToday = _accountService.GetBalance() + cashToday;
+
+                    var closesToday = new Dictionary<string, decimal>();
+                    var highsToday = new Dictionary<string, decimal>();
+                    foreach (var asset in rawDataAssets)
+                    {
+                        decimal close = asset.GetLatestPrice();
+                        decimal runningHigh = Math.Max(rawDataRunningHighs.GetValueOrDefault(asset.TickerSymbol), close);
+                        rawDataRunningHighs[asset.TickerSymbol] = runningHigh;
+                        closesToday[asset.TickerSymbol] = close;
+                        highsToday[asset.TickerSymbol] = runningHigh;
+                    }
+
+                    dayResults.Add(new SimulationDayResult
+                    {
+                        Date = date.GetValueOrDefault(),
+                        Action = _accountService.LastAction,
+                        Balance = balanceToday,
+                        Cash = cashToday,
+                        Contribution = _accountService.LastContribution,
+                        Closes = closesToday,
+                        AllTimeHighs = highsToday,
+                    });
+
+                    var y = Math.Round((double)balanceToday, 2);
                     if (double.IsNaN(y) || double.IsInfinity(y)) { dayIndex++; continue; }
 
                     allPoints.Add(new DateTimePoint(date.GetValueOrDefault(), y));
@@ -272,7 +358,7 @@ namespace Reckoner.ViewModels
                     // launches visibly; after that use the calculated batch size.
                     int effectiveBatch = dayIndex <= 90 ? 1 : batchSize;
 
-                    if (allPoints.Count % effectiveBatch == 0)
+                    if (RenderChartDuringSimulation && allPoints.Count % effectiveBatch == 0)
                     {
                         // Hand LiveCharts a private snapshot, not the live list.
                         // series.Values = ... only queues the update; LiveCharts' own
@@ -285,9 +371,11 @@ namespace Reckoner.ViewModels
                     }
                 }
 
-                // Final flush
+                // Final flush — always shows the finished line, even if intermediate painting was skipped.
                 var finalPoints = new List<DateTimePoint>(allPoints);
                 await _dispatcher.ExecuteOnMainThreadAsync(() => series.Values = finalPoints);
+                _simDayResults[_numLinesUsed] = dayResults;
+                _simTrackedTickers[_numLinesUsed] = trackedTickers;
             });
 
             _quitSimulation = false;
@@ -301,7 +389,14 @@ namespace Reckoner.ViewModels
                 SimulationHasResults = true;
             }
 
-            TogglePlayPauseCommand.NotifyCanExecuteChanged();
+            // NotifyCanExecuteChanged raises CanExecuteChanged synchronously on whatever thread calls it.
+            // This whole method runs on a background thread (see TogglePlayPause's Task.Run), so without
+            // marshalling back to the UI thread, Avalonia's Button never picks up the new CanExecute state.
+            await _dispatcher.ExecuteOnMainThreadAsync(() =>
+            {
+                TogglePlayPauseCommand.NotifyCanExecuteChanged();
+                ExportToExcelCommand.NotifyCanExecuteChanged();
+            });
         }
 
         

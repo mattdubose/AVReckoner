@@ -64,6 +64,12 @@
                                                 Value="{Binding ContributionPercentageX100}" />
                                             <TextBlock VerticalAlignment="Center" Text="%" />
                                         </StackPanel>
+                                        <CheckBox
+                                            HorizontalAlignment="Center"
+                                            Content="Track in Export"
+                                            FontSize="11"
+                                            IsChecked="{Binding TrackInExport}"
+                                            ToolTip.Tip="Include this ticker's raw Close price and running All-Time High as columns in the Excel export." />
                                     </StackPanel>
                                 </StackPanel>
                             </DataTemplate>
@@ -254,6 +260,11 @@
                             ItemsSource="{Binding SpeedOptions}"
                             SelectedItem="{Binding SelectedSpeed}" />
                     </Grid>
+                    <CheckBox
+                        VerticalAlignment="Center"
+                        Content="Render Chart"
+                        IsChecked="{Binding RenderChartDuringSimulation}"
+                        ToolTip.Tip="Turn off to skip chart drawing while the simulation runs — results are still recorded for Excel export." />
                     <Button
                         Width="240"
                         Height="40"
@@ -277,6 +288,13 @@
                         Content="Clear All Simulations"
                         IsEnabled="{Binding CanClearSimulation}"
                         IsVisible="{Binding CanClearSimulation}" />
+                    <Button
+                        Width="240"
+                        Height="40"
+                        Classes="primary"
+                        Command="{Binding ExportToExcelCommand}"
+                        CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
+                        Content="📊 Export to Excel" />
                 </StackPanel>
             </Border>
 

@@ -75,6 +75,16 @@ namespace Reckoner.Models
         set => DistributionPercentage = value / 100m;
     }
 
+    // UI-only: when checked, this ticker's raw Close/All-Time-High get written to the
+    // Excel export alongside whichever scenario is running, for validating strategy decisions.
+    private bool _trackInExport = false;
+    [JsonIgnore]
+    public bool TrackInExport
+    {
+        get => _trackInExport;
+        set { _trackInExport = value; NotifyPropertyChanged(); }
+    }
+
         public SecurityHolding() : base(string.Empty) // Default base constructor
     { /* exists for json reasons. */
     }

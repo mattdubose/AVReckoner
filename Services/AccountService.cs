@@ -13,6 +13,11 @@ namespace Reckoner.Services
     public List<AssetService> Assets;
     public FWInvestmentStrategy InvestmentStrategyService;
     public Account GetAccount() { return _account; }
+
+    // Tracks what actually happened "today" so callers (e.g. the simulation loop)
+    // can log a per-day Buy/Sell/Hold + contribution amount without re-deriving it.
+    public SuggestedAction LastAction { get; private set; } = SuggestedAction.Hold;
+    public decimal LastContribution { get; private set; } = 0m;
     public AccountService(Account myAccount, List<AssetService> RTAssets) 
     {
         _account = myAccount;
@@ -62,6 +67,8 @@ namespace Reckoner.Services
       {
         Debug.WriteLine($"Ammount contributed {amountInDollars}did not equal amount spent:{dollarsContributed}");
       }
+      LastContribution += dollarsContributed;
+      if (LastAction != SuggestedAction.Sell) LastAction = SuggestedAction.Buy;
     }
     public void Distribute(decimal amountInDollars)
     {
@@ -81,6 +88,7 @@ namespace Reckoner.Services
         asset.SellInDollars(dollarsFromThisAsset);
         dollarsDistributed += dollarsFromThisAsset;
       }
+      LastAction = SuggestedAction.Sell;
     }
     public decimal GetBalance() 
     {
@@ -131,6 +139,8 @@ namespace Reckoner.Services
             //      Debug.WriteLine($"Running activities for {_account.AccountId} on {DateTimeService.GetInstance.GetCurrentDate()}");
 
         DateTime today = DateTimeService.GetInstance.GetCurrentDate();
+        LastAction = SuggestedAction.Hold;
+        LastContribution = 0m;
         HandleCorporateActions(today);
         //wmdTODO      ExecuteEvaluation();
         if (_account.Strategy == Models.InvestmentStrategy.FWStrategy) 
@@ -209,6 +219,7 @@ namespace Reckoner.Services
         private void HandleInvestmentStrategy()
         {
             _latestAction = InvestmentStrategyService.DetermineActionOnAccount();
+            LastAction = _latestAction;
             if (_latestAction == SuggestedAction.Buy)
             {
                 if (_account.CashBalance > 0)
