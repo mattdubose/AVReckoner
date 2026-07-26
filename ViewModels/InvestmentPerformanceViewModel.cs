@@ -58,7 +58,6 @@ namespace Reckoner.ViewModels
         private Account _myAccount = new Account();
         Dictionary<int, SimulationSettings> _simSettings;
         private readonly Dictionary<int, List<SimulationDayResult>> _simDayResults = new();
-        private readonly Dictionary<int, List<string>> _simTrackedTickers = new();
         bool _quitSimulation = false;
         [ObservableProperty]
         bool showSearchView = false;
@@ -90,13 +89,14 @@ namespace Reckoner.ViewModels
             });
             _numLinesUsed = 0;
             _simDayResults.Clear();
-            _simTrackedTickers.Clear();
             SimulationHasResults = false;
             TogglePlayPauseCommand.NotifyCanExecuteChanged();
             ExportToExcelCommand.NotifyCanExecuteChanged();
         }
 
-        private bool CanExportToExcel() => _simDayResults.Count > 0;
+        // Exporting re-reads market prices via the shared DateTimeService date provider (see
+        // BuildExportRuns) — blocked while a simulation is running to avoid both fighting over it.
+        private bool CanExportToExcel() => _simDayResults.Count > 0 && !IsSimulationRunning;
 
         [RelayCommand(CanExecute = nameof(CanExportToExcel))]
         private async Task ExportToExcel(TopLevel root)
@@ -115,24 +115,77 @@ namespace Reckoner.ViewModels
             });
             if (file == null) return;
 
-            var runs = _simDayResults
-                .OrderBy(kv => kv.Key)
-                .Select(kv => new SimulationRunExport
-                {
-                    Name = _simSettings.TryGetValue(kv.Key, out var s) ? s.Name : $"Run {kv.Key + 1}",
-                    Days = kv.Value,
-                    TrackedTickers = _simTrackedTickers.TryGetValue(kv.Key, out var t) ? t : new List<string>(),
-                })
-                .ToList();
-
             try
             {
+                var runs = await Task.Run(BuildExportRuns);
                 await Task.Run(() => ExcelExportService.ExportRuns(file.Path.LocalPath, runs));
             }
             catch (Exception ex)
             {
                 SetSimulationError($"Excel export failed: {ex.Message}");
             }
+        }
+
+        // Fills in Close/All-Time-High for whichever tickers are checked "Track in Export" right
+        // now — across every scenario tab, not just the one active when each run happened — so
+        // checking a box after a run has already finished still shows up in the export.
+        private List<SimulationRunExport> BuildExportRuns()
+        {
+            var trackedTickers = _simSettings.Values
+                .SelectMany(s => s.Holdings)
+                .Where(h => h.TrackInExport)
+                .Select(h => h.TickerSymbol)
+                .Distinct()
+                .ToList();
+
+            List<AssetService> priceAssets = new();
+            if (trackedTickers.Count > 0)
+            {
+                var priceLookupAccount = new Account();
+                foreach (var ticker in trackedTickers)
+                    priceLookupAccount.Assets.Add(new SecurityHolding(ticker, ticker));
+                priceAssets = SLMarketSecurityHelper.BuildAssetServices(priceLookupAccount);
+
+                var allDates = _simDayResults.Values.SelectMany(days => days).Select(d => d.Date).ToList();
+                if (allDates.Count > 0)
+                {
+                    DateTime minDate = allDates.Min();
+                    DateTime maxDate = allDates.Max().AddDays(1);
+                    foreach (var asset in priceAssets)
+                        asset.Preload(minDate, maxDate);
+                }
+            }
+
+            var managedTimeProvider = new ManagedDateTime();
+            DateTimeService.GetInstance.SetDateProvider(managedTimeProvider);
+
+            return _simDayResults
+                .OrderBy(kv => kv.Key)
+                .Select(kv =>
+                {
+                    var runningHighs = new Dictionary<string, decimal>();
+                    foreach (var day in kv.Value)
+                    {
+                        managedTimeProvider.SetCurrentDate(day.Date);
+                        day.Closes.Clear();
+                        day.AllTimeHighs.Clear();
+                        foreach (var asset in priceAssets)
+                        {
+                            decimal close = asset.GetLatestPrice();
+                            decimal runningHigh = Math.Max(runningHighs.GetValueOrDefault(asset.TickerSymbol), close);
+                            runningHighs[asset.TickerSymbol] = runningHigh;
+                            day.Closes[asset.TickerSymbol] = close;
+                            day.AllTimeHighs[asset.TickerSymbol] = runningHigh;
+                        }
+                    }
+                    return new SimulationRunExport
+                    {
+                        Name = _simSettings.TryGetValue(kv.Key, out var s) ? s.Name : $"Run {kv.Key + 1}",
+                        Days = kv.Value,
+                        TrackedTickers = trackedTickers,
+                    };
+                })
+                .ToList();
         }
         public enum DrawSpeed
         {
@@ -188,6 +241,7 @@ namespace Reckoner.ViewModels
 
             IsSimulationRunning = true;
             IsPaused = false;
+            ExportToExcelCommand.NotifyCanExecuteChanged();
 
             // Run the simulation in the background
             _ = Task.Run(RunInvestmentSimulation); // fire the long running task
@@ -284,12 +338,6 @@ namespace Reckoner.ViewModels
 
             // Run the simulation loop in a background thread
             bool wasCancelled = false;
-            var trackedTickers = simSettingsVM.ActiveSimSettings.Holdings
-                .Where(h => h.TrackInExport)
-                .Select(h => h.TickerSymbol)
-                .ToList();
-            var rawDataAssets = _accountService.Assets.Where(a => trackedTickers.Contains(a.TickerSymbol)).ToList();
-            var rawDataRunningHighs = new Dictionary<string, decimal>();
             await Task.Run(async () =>
             {
                 int totalDays = (int)((endDate ?? DateTime.Now) - (startDate ?? DateTime.Now)).TotalDays;
@@ -325,17 +373,9 @@ namespace Reckoner.ViewModels
                     decimal cashToday = _accountService.GetAccount().CashBalance;
                     decimal balanceToday = _accountService.GetBalance() + cashToday;
 
-                    var closesToday = new Dictionary<string, decimal>();
-                    var highsToday = new Dictionary<string, decimal>();
-                    foreach (var asset in rawDataAssets)
-                    {
-                        decimal close = asset.GetLatestPrice();
-                        decimal runningHigh = Math.Max(rawDataRunningHighs.GetValueOrDefault(asset.TickerSymbol), close);
-                        rawDataRunningHighs[asset.TickerSymbol] = runningHigh;
-                        closesToday[asset.TickerSymbol] = close;
-                        highsToday[asset.TickerSymbol] = runningHigh;
-                    }
-
+                    // Closes/AllTimeHighs are filled in later, at export time — see BuildExportRuns.
+                    // That way "Track in Export" reflects whatever's checked *when you export*,
+                    // not whatever was checked back when this run happened to be playing.
                     dayResults.Add(new SimulationDayResult
                     {
                         Date = date.GetValueOrDefault(),
@@ -343,8 +383,6 @@ namespace Reckoner.ViewModels
                         Balance = balanceToday,
                         Cash = cashToday,
                         Contribution = _accountService.LastContribution,
-                        Closes = closesToday,
-                        AllTimeHighs = highsToday,
                     });
 
                     var y = Math.Round((double)balanceToday, 2);
@@ -375,7 +413,6 @@ namespace Reckoner.ViewModels
                 var finalPoints = new List<DateTimePoint>(allPoints);
                 await _dispatcher.ExecuteOnMainThreadAsync(() => series.Values = finalPoints);
                 _simDayResults[_numLinesUsed] = dayResults;
-                _simTrackedTickers[_numLinesUsed] = trackedTickers;
             });
 
             _quitSimulation = false;
