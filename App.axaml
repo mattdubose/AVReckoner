@@ -9,6 +9,7 @@
     <Application.Styles>
         <!--  Built-in Avalonia Fluent theme  -->
         <FluentTheme />
+        <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
 
         <!--  Your custom control styles  -->
         <StyleInclude Source="avares://AvReckoner/Styles/Controls.axaml" />

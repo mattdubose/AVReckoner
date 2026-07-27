@@ -1,0 +1,21 @@
+<Window
+    x:Class="Reckoner.Views.DebugLogWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="clr-namespace:Reckoner.ViewModels"
+    Title="Debug Log — fiPy Output"
+    Width="700"
+    Height="500"
+    x:DataType="vm:MarketDataAdminViewModel">
+
+    <Border Padding="10" Background="#1E1E1E">
+        <ScrollViewer>
+            <TextBlock
+                FontFamily="Consolas,Courier New,monospace"
+                FontSize="12"
+                Foreground="#D4D4D4"
+                Text="{Binding UpdateLog}"
+                TextWrapping="Wrap" />
+        </ScrollViewer>
+    </Border>
+</Window>

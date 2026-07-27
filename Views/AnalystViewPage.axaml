@@ -1,0 +1,288 @@
+<UserControl
+    x:Class="Reckoner.Views.AnalystViewPage"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:Reckoner.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.Avalonia;assembly=LiveChartsCore.SkiaSharpView.Avalonia"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:model="clr-namespace:Reckoner.Models"
+    xmlns:vm="clr-namespace:Reckoner.ViewModels"
+    d:DesignHeight="700"
+    d:DesignWidth="1100"
+    x:DataType="vm:AnalystViewModel"
+    mc:Ignorable="d">
+
+    <Grid Margin="20" RowDefinitions="Auto,Auto,Auto,*">
+
+        <!--  Header  -->
+        <StackPanel
+            Grid.Row="0"
+            Margin="0,0,0,10"
+            Orientation="Horizontal"
+            Spacing="12">
+            <TextBlock
+                VerticalAlignment="Center"
+                FontSize="22"
+                FontWeight="Bold"
+                Text="Analyst View" />
+            <Button Command="{Binding AddScenarioCommand}" Content="+ Add Scenario" />
+            <Button
+                Classes="primary"
+                Command="{Binding RunAllCommand}"
+                Content="▶ Run All" />
+            <TextBlock
+                VerticalAlignment="Center"
+                FontStyle="Italic"
+                IsVisible="{Binding IsRunning}"
+                Text="Running scenarios..." />
+        </StackPanel>
+
+        <!--  Client/Account picker — scenario queue is built from whichever account is picked here  -->
+        <StackPanel
+            Grid.Row="1"
+            Margin="0,0,0,10"
+            Orientation="Horizontal"
+            Spacing="8">
+            <Label VerticalAlignment="Center" Content="Client:" />
+            <ComboBox ItemsSource="{Binding Clients}" SelectedItem="{Binding SelectedClient, Mode=TwoWay}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate DataType="model:Client">
+                        <TextBlock Text="{Binding FullName}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+            <Label VerticalAlignment="Center" Content="Account:" IsVisible="{Binding AccountPickerVisible}" />
+            <ComboBox
+                ItemsSource="{Binding Accounts}"
+                SelectedItem="{Binding SelectedAccount, Mode=TwoWay}"
+                IsVisible="{Binding AccountPickerVisible}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate DataType="model:Account">
+                        <TextBlock Text="{Binding AccountId}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+            <TextBlock
+                VerticalAlignment="Center"
+                Foreground="Gray"
+                FontStyle="Italic"
+                IsVisible="{Binding HasNoScenarios}"
+                Text="Pick a client and account to build the scenario queue." />
+        </StackPanel>
+
+        <!--  Error banner  -->
+        <Border
+            Grid.Row="2"
+            Margin="0,0,0,10"
+            Padding="10"
+            Background="#FFF2F0"
+            BorderBrush="#D9534F"
+            BorderThickness="1"
+            CornerRadius="6"
+            IsVisible="{Binding HasRunError}">
+            <TextBlock
+                Foreground="#D9534F"
+                Text="{Binding RunError}"
+                TextWrapping="Wrap" />
+        </Border>
+
+        <Grid Grid.Row="3" ColumnDefinitions="420,*">
+
+            <!--  Scenario queue  -->
+            <ScrollViewer Grid.Column="0" Margin="0,0,10,0">
+                <ItemsControl ItemsSource="{Binding Scenarios}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="vm:AnalystScenarioSlot">
+                            <Border
+                                Margin="0,0,0,10"
+                                Padding="10"
+                                Background="White"
+                                BorderBrush="Gray"
+                                BorderThickness="1"
+                                CornerRadius="8">
+                                <StackPanel Spacing="6">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBox
+                                            Grid.Column="0"
+                                            Text="{Binding SimSettingsVM.ActiveSimSettings.Name}"
+                                            Watermark="Scenario name" />
+                                        <Button
+                                            Grid.Column="1"
+                                            Margin="6,0,0,0"
+                                            Command="{Binding $parent[UserControl].DataContext.RemoveScenarioCommand}"
+                                            CommandParameter="{Binding}"
+                                            Content="✕" />
+                                    </Grid>
+
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <Label VerticalAlignment="Center" Content="Strategy:" />
+                                        <ComboBox
+                                            ItemsSource="{Binding SimSettingsVM.InvestmentStrategies}"
+                                            SelectedItem="{Binding SimSettingsVM.ActiveSimSettings.Strategy}" />
+                                        <Button
+                                            Background="Transparent"
+                                            Command="{Binding SimSettingsVM.OpenStrategySettingsCommand}"
+                                            CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
+                                            Content="⚙️"
+                                            IsVisible="{Binding SimSettingsVM.UseFWStrategy}" />
+                                    </StackPanel>
+
+                                    <StackPanel
+                                        Orientation="Horizontal"
+                                        Spacing="6"
+                                        IsVisible="{Binding SimSettingsVM.UseFWStrategy}">
+                                        <Label VerticalAlignment="Center" Content="Ref Ticker:" />
+                                        <ComboBox
+                                            ItemsSource="{Binding SimSettingsVM.ActiveSimSettings.Holdings}"
+                                            SelectedItem="{Binding SimSettingsVM.SelectedFwTicker}">
+                                            <ComboBox.ItemTemplate>
+                                                <DataTemplate DataType="model:SecurityHolding">
+                                                    <TextBlock Text="{Binding TickerSymbol}" />
+                                                </DataTemplate>
+                                            </ComboBox.ItemTemplate>
+                                        </ComboBox>
+                                    </StackPanel>
+
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <Label VerticalAlignment="Center" Content="DRIP:" />
+                                        <CheckBox IsChecked="{Binding SimSettingsVM.ActiveSimSettings.DividendReinvestment}" />
+                                    </StackPanel>
+
+                                    <TextBlock FontWeight="Bold" Text="Holdings (%)" />
+                                    <ItemsControl ItemsSource="{Binding SimSettingsVM.ActiveSimSettings.Holdings}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate DataType="model:SecurityHolding">
+                                                <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2">
+                                                    <TextBlock
+                                                        Width="70"
+                                                        VerticalAlignment="Center"
+                                                        FontWeight="Bold"
+                                                        Text="{Binding TickerSymbol}" />
+                                                    <controls:DecimalInput
+                                                        ErrorMessage="Use format 100.00"
+                                                        FormatString="0.00"
+                                                        Watermark="25.00"
+                                                        Value="{Binding ContributionPercentageX100}" />
+                                                    <TextBlock VerticalAlignment="Center" Text="%" />
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <Label VerticalAlignment="Center" Content="Initial:" />
+                                        <controls:DecimalInput
+                                            ErrorMessage="Use format 1000.00"
+                                            FormatString="0.00"
+                                            Watermark="1000.00"
+                                            Value="{Binding SimSettingsVM.ActiveSimSettings.InitialCash}" />
+                                    </StackPanel>
+
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <Label VerticalAlignment="Center" Content="Contribution:" />
+                                        <controls:DecimalInput
+                                            ErrorMessage="Use format 100.00"
+                                            FormatString="0.00"
+                                            Watermark="100.0"
+                                            Value="{Binding SimSettingsVM.ActiveSimSettings.ContributionAmount}" />
+                                        <ComboBox
+                                            ItemsSource="{Binding SimSettingsVM.ContributionFrequencies}"
+                                            SelectedItem="{Binding SimSettingsVM.ActiveSimSettings.ContributionInterval}" />
+                                    </StackPanel>
+
+                                    <StackPanel
+                                        Orientation="Horizontal"
+                                        Spacing="6"
+                                        IsVisible="{Binding SimSettingsVM.ShowDayPicker}">
+                                        <Label VerticalAlignment="Center" Content="Day of Week:" />
+                                        <ComboBox
+                                            ItemsSource="{Binding SimSettingsVM.DaysOfWeek}"
+                                            SelectedItem="{Binding SimSettingsVM.ActiveSimSettings.SelectedDayOfWeek}" />
+                                    </StackPanel>
+
+                                    <StackPanel
+                                        Orientation="Horizontal"
+                                        Spacing="6"
+                                        IsVisible="{Binding SimSettingsVM.ShowDateEntry}">
+                                        <Label VerticalAlignment="Center" Content="Days:" />
+                                        <TextBox
+                                            Text="{Binding SimSettingsVM.ActiveSimSettings.ContributionDates}"
+                                            ToolTip.Tip="{Binding SimSettingsVM.DateHelperText}"
+                                            Watermark="1, 15" />
+                                    </StackPanel>
+
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <Label VerticalAlignment="Center" Content="Rebalance:" />
+                                        <ComboBox
+                                            ItemsSource="{Binding SimSettingsVM.ContributionFrequencies}"
+                                            SelectedItem="{Binding SimSettingsVM.ActiveSimSettings.RebalanceInterval}" />
+                                    </StackPanel>
+
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <Label VerticalAlignment="Center" Content="Start:" />
+                                        <DatePicker SelectedDate="{Binding SimSettingsVM.ActiveSimSettings.StartDateOffset, Mode=TwoWay}" />
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <Label VerticalAlignment="Center" Content="End:" />
+                                        <DatePicker SelectedDate="{Binding SimSettingsVM.ActiveSimSettings.EndDateOffset, Mode=TwoWay}" />
+                                    </StackPanel>
+
+                                    <TextBlock
+                                        FontStyle="Italic"
+                                        Text="{Binding StatusMessage}" />
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+
+            <!--  Results + drill-down  -->
+            <Grid Grid.Column="1" RowDefinitions="Auto,Auto,*">
+                <TextBlock
+                    Grid.Row="0"
+                    Margin="0,0,0,4"
+                    Foreground="Gray"
+                    FontStyle="Italic"
+                    Text="Ctrl/Shift-click to compare multiple scenarios on the chart below." />
+                <Border
+                    Grid.Row="1"
+                    Margin="0,0,0,10"
+                    Padding="5"
+                    Background="White"
+                    BorderBrush="Gray"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    MaxHeight="260">
+                    <DataGrid
+                        Name="ResultsGrid"
+                        AutoGenerateColumns="False"
+                        CanUserSortColumns="True"
+                        IsReadOnly="True"
+                        ItemsSource="{Binding Results}"
+                        SelectionMode="Extended"
+                        SelectionChanged="ResultsGrid_SelectionChanged">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Width="*" Binding="{Binding Name}" Header="Scenario" />
+                            <DataGridTextColumn Width="150" Binding="{Binding EndBalance, StringFormat={}{0:C}}" Header="End Balance" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Border>
+
+                <Border
+                    Grid.Row="2"
+                    Padding="5"
+                    Background="White"
+                    BorderBrush="Gray"
+                    BorderThickness="1"
+                    CornerRadius="8">
+                    <lvc:CartesianChart
+                        Series="{Binding DetailSeries}"
+                        XAxes="{Binding DetailXAxes}"
+                        ZoomMode="X" />
+                </Border>
+            </Grid>
+        </Grid>
+    </Grid>
+</UserControl>

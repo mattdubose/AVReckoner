@@ -114,6 +114,7 @@ namespace AvReckoner
             services.AddTransient<InvestmentPerformanceViewModel>();
             services.AddTransient<DrawdownSimulationViewModel>();
             services.AddTransient<MarketDataAdminViewModel>();
+            services.AddTransient<AnalystViewModel>();
 
             // 3. Build the IServiceProvider from the ServiceCollection.
             Services = services.BuildServiceProvider();

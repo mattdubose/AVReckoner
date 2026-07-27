@@ -30,6 +30,12 @@ namespace Reckoner.ViewModels
         }
 
         [RelayCommand]
+        private async Task NavigateToAnalystView()
+        {
+            await _appShellService.Navigation.NavigateToAsync<AnalystViewModel>();
+        }
+
+        [RelayCommand]
         private async Task NavigateToSettings()
         {
             throw new NotImplementedException();

@@ -19,6 +19,7 @@ namespace AvReckoner
             { typeof(InvestmentPerformanceViewModel), typeof(InvestmentPerformancePage) },
             { typeof(DrawdownSimulationViewModel), typeof(DrawdownSimulationPage) },
             { typeof(MarketDataAdminViewModel), typeof(MarketDataAdminPage) },
+            { typeof(AnalystViewModel), typeof(AnalystViewPage) },
         };
         public Control? Build(object? param)
         {

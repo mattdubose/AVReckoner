@@ -1,0 +1,12 @@
+[
+  { "ticker": "AAPL", "name": "Apple Inc." },
+  { "ticker": "AMZN", "name": "Amazon.com, Inc." },
+  { "ticker": "GE", "name": "GE Aerospace" },
+  { "ticker": "GOOGL", "name": "Alphabet Inc." },
+  { "ticker": "MSFT", "name": "Microsoft Corporation" },
+  { "ticker": "QQQ", "name": "Invesco QQQ Trust, Series 1" },
+  { "ticker": "RIVN", "name": "Rivian Automotive, Inc." },
+  { "ticker": "SPY", "name": "State Street SPDR S&P 500 ETF Trust" },
+  { "ticker": "TSLA", "name": "Tesla, Inc." },
+  { "ticker": "VTSAX", "name": "Vanguard Total Stock Market Index Fund" }
+]
