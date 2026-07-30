@@ -250,7 +250,7 @@ namespace Reckoner.Services
             foreach (AssetService asset in Assets)
             {
                 decimal dividend = asset.GetTotalDividendAmount(today);
-                if (_account.DividentReinvestment)
+                if ((_account.DividentReinvestment) && (dividend > 0))
                 {
                     asset.BuyInDollars(dividend);
                 }

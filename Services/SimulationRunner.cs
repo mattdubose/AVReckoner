@@ -22,6 +22,14 @@ namespace Reckoner.Services
                 accountService.RunDaysActivities();
                 decimal cash = accountService.GetAccount().CashBalance;
                 decimal balance = accountService.GetBalance() + cash;
+
+                // Every held ticker's price, every day — cheap (prices are already cached from
+                // Preload) and lets callers build a "what happened on this date" view without a
+                // second pass over the date range.
+                var closes = new Dictionary<string, decimal>();
+                foreach (var asset in accountService.Assets)
+                    closes[asset.TickerSymbol] = asset.GetLatestPrice();
+
                 results.Add(new SimulationDayResult
                 {
                     Date = date,
@@ -29,6 +37,7 @@ namespace Reckoner.Services
                     Balance = balance,
                     Cash = cash,
                     Contribution = accountService.LastContribution,
+                    Closes = closes,
                 });
             }
             return results;

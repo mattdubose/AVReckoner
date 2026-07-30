@@ -35,6 +35,19 @@ namespace Reckoner.ViewModels
         public string Name { get; set; } = string.Empty;
         public decimal EndBalance { get; set; }
         public List<SimulationDayResult> Days { get; set; } = new();
+        public string? ReferenceTicker { get; set; }
+    }
+
+    // A Buy/Sell transition day, with every held ticker's price that day — the "what actually
+    // happened on this date" detail the chart alone can't show at a glance.
+    public partial class AnalystChartEvent : ObservableObject
+    {
+        public string ScenarioName { get; set; } = string.Empty;
+        public DateTime Date { get; set; }
+        public string EventType { get; set; } = string.Empty; // "Sold" or "Bought Back"
+        public string? ReferenceTicker { get; set; }
+        public decimal? ReferencePrice { get; set; }
+        public string AllPrices { get; set; } = string.Empty;
     }
 
     public partial class AnalystViewModel : BaseViewModel
@@ -58,13 +71,29 @@ namespace Reckoner.ViewModels
         [ObservableProperty] private string runError = string.Empty;
         [ObservableProperty] private bool hasRunError;
 
+        [ObservableProperty] private ObservableCollection<AnalystChartEvent> events = new();
+        [ObservableProperty] private AnalystChartEvent? selectedEvent;
+
         [ObservableProperty] private ISeries[] detailSeries = Array.Empty<ISeries>();
+        [ObservableProperty] private RectangularSection[] detailSections = Array.Empty<RectangularSection>();
         [ObservableProperty] private Axis[] detailXAxes = new Axis[]
         {
             new DateTimeAxis(TimeSpan.FromDays(1), date => date.ToString("MMM ''yy"))
             {
                 MinStep = TimeSpan.FromDays(28).Ticks,
                 LabelsRotation = -45,
+                TextSize = 11,
+            }
+        };
+
+        // Without an explicit Labeler, LiveCharts prints the raw double (decimal->double
+        // conversion noise included) on both the axis and the hover tooltip — force it to
+        // money with 2 decimal places everywhere it shows a value.
+        [ObservableProperty] private Axis[] detailYAxes = new Axis[]
+        {
+            new Axis
+            {
+                Labeler = value => value.ToString("C2"),
                 TextSize = 11,
             }
         };
@@ -184,6 +213,7 @@ namespace Reckoner.ViewModels
                             Name = slot.SimSettingsVM.ActiveSimSettings.Name,
                             EndBalance = days.Count > 0 ? days[^1].Balance : 0,
                             Days = days,
+                            ReferenceTicker = slot.SimSettingsVM.SelectedFwTicker?.TickerSymbol,
                         };
                     });
                     newResults.Add(row);
@@ -212,13 +242,21 @@ namespace Reckoner.ViewModels
 
         // Called from the results grid's SelectionChanged (code-behind) — one line per
         // selected scenario, so you can compare several at once instead of just the top pick.
+        // Sell-off stretches (Action == Sell, i.e. holding cash out of the market) get a
+        // translucent red background band instead of recoloring the line itself — a second
+        // line series per segment made the tooltip show multiple disconnected entries for what
+        // was supposed to be one continuous scenario, which was more confusing than the zero dip
+        // it replaced.
         public void UpdateSelectedResults(IReadOnlyList<AnalystResultRow> selected)
         {
             if (selected.Count == 0)
             {
                 DetailSeries = Array.Empty<ISeries>();
+                DetailSections = Array.Empty<RectangularSection>();
+                Events.Clear();
                 return;
             }
+
             DetailSeries = selected.Select((row, i) => (ISeries)new LineSeries<DateTimePoint>
             {
                 Values = row.Days.Select(d => new DateTimePoint(d.Date, (double)d.Balance)).ToList(),
@@ -228,6 +266,113 @@ namespace Reckoner.ViewModels
                 GeometryStroke = null,
                 Name = row.Name,
             }).ToArray();
+
+            // Zoomed out over a long backtest, a short sell-off can be only a few pixels wide —
+            // pad it out to a visible minimum width and use a stronger fill so it still reads as
+            // "eye popping" rather than disappearing at the current zoom level.
+            DetailSections = selected
+                .SelectMany(row => GetSellOffRanges(row.Days))
+                .Select(range =>
+                {
+                    var padded = range.end - range.start < TimeSpan.FromDays(10)
+                        ? (range.start.AddDays(-5), range.end.AddDays(5))
+                        : range;
+                    return new RectangularSection
+                    {
+                        Xi = padded.Item1.Ticks,
+                        Xj = padded.Item2.Ticks,
+                        Fill = new SolidColorPaint(SKColors.Red.WithAlpha(110)),
+                    };
+                })
+                .ToArray();
+
+            Events = new ObservableCollection<AnalystChartEvent>(
+                selected.SelectMany(row => BuildEvents(row))
+                    .OrderBy(e => e.Date));
+        }
+
+        // One row per Buy/Sell transition — the exact date, and every held ticker's price that
+        // day, so you don't have to pixel-hunt on the chart to see what actually triggered it.
+        private static IEnumerable<AnalystChartEvent> BuildEvents(AnalystResultRow row)
+        {
+            for (int i = 0; i < row.Days.Count; i++)
+            {
+                bool isSellOff = row.Days[i].Action == SuggestedAction.Sell;
+                bool wasSellOff = i > 0 && row.Days[i - 1].Action == SuggestedAction.Sell;
+                if (isSellOff == wasSellOff) continue;
+
+                var day = row.Days[i];
+                decimal? referencePrice = row.ReferenceTicker != null && day.Closes.TryGetValue(row.ReferenceTicker, out var p)
+                    ? p
+                    : null;
+                yield return new AnalystChartEvent
+                {
+                    ScenarioName = row.Name,
+                    Date = day.Date,
+                    EventType = isSellOff ? "Sold" : "Bought Back",
+                    ReferenceTicker = row.ReferenceTicker,
+                    ReferencePrice = referencePrice,
+                    AllPrices = string.Join(", ", day.Closes.Select(kv =>
+                        $"{kv.Key}{(kv.Key == row.ReferenceTicker ? "★" : "")}: {kv.Value:C2}")),
+                };
+            }
+        }
+
+        [RelayCommand]
+        private void ZoomToEvent(AnalystChartEvent evt)
+        {
+            if (evt == null) return;
+            DetailXAxes = new Axis[]
+            {
+                new DateTimeAxis(TimeSpan.FromDays(1), date => date.ToString("MMM d ''yy"))
+                {
+                    MinStep = TimeSpan.FromDays(1).Ticks,
+                    LabelsRotation = -45,
+                    TextSize = 11,
+                    MinLimit = evt.Date.AddDays(-60).Ticks,
+                    MaxLimit = evt.Date.AddDays(60).Ticks,
+                }
+            };
+        }
+
+        [RelayCommand]
+        private void ResetZoom()
+        {
+            DetailXAxes = new Axis[]
+            {
+                new DateTimeAxis(TimeSpan.FromDays(1), date =>
+                    date.Month == 1 && date.Day <= 7 ? date.ToString("yyyy") : date.ToString("MMM ''yy"))
+                {
+                    MinStep = TimeSpan.FromDays(28).Ticks,
+                    LabelsRotation = -45,
+                    TextSize = 11,
+                }
+            };
+        }
+
+        partial void OnSelectedEventChanged(AnalystChartEvent? value)
+        {
+            if (value != null) ZoomToEvent(value);
+        }
+
+        // Contiguous (start, end) date ranges where the day's Action was Sell.
+        private static IEnumerable<(DateTime start, DateTime end)> GetSellOffRanges(List<SimulationDayResult> days)
+        {
+            DateTime? rangeStart = null;
+            for (int i = 0; i < days.Count; i++)
+            {
+                bool isSellOff = days[i].Action == SuggestedAction.Sell;
+                if (isSellOff && rangeStart == null)
+                {
+                    rangeStart = days[i].Date;
+                }
+                else if (!isSellOff && rangeStart != null)
+                {
+                    yield return (rangeStart.Value, days[i - 1].Date);
+                    rangeStart = null;
+                }
+            }
+            if (rangeStart != null) yield return (rangeStart.Value, days[^1].Date);
         }
     }
 }

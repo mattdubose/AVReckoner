@@ -46,7 +46,7 @@ namespace Reckoner.Services
       if (curPrice <= 0)
       {
 
-        Debug.WriteLine($"No valid price for {TickerSymbol} - cannot inititate buy.");
+        Debug.WriteLine($"No valid price for {TickerSymbol} - cannot inititate buy on {DateTimeService.GetInstance.GetCurrentDate()}");
         return 0;
       }
       decimal numShares = Dollars / curPrice;
@@ -58,7 +58,7 @@ namespace Reckoner.Services
       decimal curPrice = _marketInterface.GetCurrentPrice(TickerSymbol);
       if (curPrice <= 0)
       {
-        Debug.WriteLine($"No valid price for {TickerSymbol} - cannot inititate buy.");
+        Debug.WriteLine($"No valid price for {TickerSymbol} - cannot inititate buy on {DateTimeService.GetInstance.GetCurrentDate()}");
         return 0;
       }
       decimal cost = NumShares * curPrice;
