@@ -166,7 +166,16 @@ namespace Reckoner.Services
           if (InvestmentScheduleHelper.IsContributionDay(_account.InvestmentSchedule, today))
           {
             Debug.WriteLine($"{today.ToString("MM-dd-yyyy")} is a contribution day");
-            if (CanPerformTradeActionToday() == false)
+            if (LastAction == SuggestedAction.Sell)
+            {
+              // Strategy is sitting out of the market on a sell-off — hold the contribution as
+              // cash instead of buying in against that signal. It joins CashBalance and gets
+              // invested automatically the day the strategy buys back in (see HandleInvestmentStrategy).
+              _account.CashBalance += _account.InvestmentAmount;
+              LastContribution += _account.InvestmentAmount;
+              Debug.WriteLine($"{today.ToString("MM-dd-yyyy")}: holding contribution as cash during sell-off.");
+            }
+            else if (CanPerformTradeActionToday() == false)
             {
               _account.StackedActivities.Add(new ActivityHolder (Models.Action.Contribution, _account.InvestmentAmount, today));
               Debug.WriteLine("Can't perform buy action today, will delay.");

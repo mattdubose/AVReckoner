@@ -10,11 +10,14 @@ namespace Reckoner.Services
         public List<SimulationDayResult> Days { get; set; }
         /// Tickers checked "Track in Export" for this run — drives the Close/All-Time-High column pairs.
         public List<string> TrackedTickers { get; set; } = new();
+        /// The run's real account holdings — drives the Shares/Price/Reference-High column triples.
+        public List<string> HoldingTickers { get; set; } = new();
     }
 
     public static class ExcelExportService
     {
         private const int FixedColumnsPerRun = 5; // Date, Action, Balance, Cash, Contribution
+        private const int ColumnsPerHolding = 3; // Shares, Price, Reference High
         private const int ColumnsPerTracker = 2; // Close, All-Time High
         private const int BlankColumnsBetweenRuns = 2;
 
@@ -37,7 +40,11 @@ namespace Reckoner.Services
 
         private static int WriteRun(IXLWorksheet ws, SimulationRunExport run, int startColumn)
         {
-            int columnCount = FixedColumnsPerRun + ColumnsPerTracker * run.TrackedTickers.Count;
+            int columnCount = FixedColumnsPerRun
+                + ColumnsPerHolding * run.HoldingTickers.Count
+                + ColumnsPerTracker * run.TrackedTickers.Count;
+            int holdingsStartColumn = startColumn + FixedColumnsPerRun;
+            int trackersStartColumn = holdingsStartColumn + ColumnsPerHolding * run.HoldingTickers.Count;
 
             var nameCell = ws.Cell(1, startColumn);
             nameCell.Value = run.Name;
@@ -49,10 +56,18 @@ namespace Reckoner.Services
             ws.Cell(2, startColumn + 2).Value = "Balance";
             ws.Cell(2, startColumn + 3).Value = "Cash";
             ws.Cell(2, startColumn + 4).Value = "Contribution";
+            for (int h = 0; h < run.HoldingTickers.Count; h++)
+            {
+                string ticker = run.HoldingTickers[h];
+                int col = holdingsStartColumn + h * ColumnsPerHolding;
+                ws.Cell(2, col).Value = $"{ticker} Shares";
+                ws.Cell(2, col + 1).Value = $"{ticker} Price";
+                ws.Cell(2, col + 2).Value = $"{ticker} Reference High";
+            }
             for (int t = 0; t < run.TrackedTickers.Count; t++)
             {
                 string ticker = run.TrackedTickers[t];
-                int col = startColumn + FixedColumnsPerRun + t * ColumnsPerTracker;
+                int col = trackersStartColumn + t * ColumnsPerTracker;
                 ws.Cell(2, col).Value = $"{ticker} Close";
                 ws.Cell(2, col + 1).Value = $"{ticker} All-Time High";
             }
@@ -71,10 +86,31 @@ namespace Reckoner.Services
                 ws.Cell(row, startColumn + 4).Value = day.Contribution;
                 ws.Cell(row, startColumn + 4).Style.NumberFormat.Format = "$#,##0.00";
 
+                for (int h = 0; h < run.HoldingTickers.Count; h++)
+                {
+                    string ticker = run.HoldingTickers[h];
+                    int col = holdingsStartColumn + h * ColumnsPerHolding;
+                    if (day.HoldingShares.TryGetValue(ticker, out var shares))
+                    {
+                        ws.Cell(row, col).Value = shares;
+                        ws.Cell(row, col).Style.NumberFormat.Format = "#,##0.0000";
+                    }
+                    if (day.HoldingPrices.TryGetValue(ticker, out var price))
+                    {
+                        ws.Cell(row, col + 1).Value = price;
+                        ws.Cell(row, col + 1).Style.NumberFormat.Format = "$#,##0.00";
+                    }
+                    if (day.ReferenceHighs.TryGetValue(ticker, out var refHigh))
+                    {
+                        ws.Cell(row, col + 2).Value = refHigh;
+                        ws.Cell(row, col + 2).Style.NumberFormat.Format = "$#,##0.00";
+                    }
+                }
+
                 for (int t = 0; t < run.TrackedTickers.Count; t++)
                 {
                     string ticker = run.TrackedTickers[t];
-                    int col = startColumn + FixedColumnsPerRun + t * ColumnsPerTracker;
+                    int col = trackersStartColumn + t * ColumnsPerTracker;
                     if (day.Closes.TryGetValue(ticker, out var close))
                     {
                         ws.Cell(row, col).Value = close;

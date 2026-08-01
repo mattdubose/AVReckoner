@@ -89,6 +89,8 @@ namespace Reckoner.ViewModels
             });
             _numLinesUsed = 0;
             _simDayResults.Clear();
+            _referenceTickers.Clear();
+            Events.Clear();
             SimulationHasResults = false;
             TogglePlayPauseCommand.NotifyCanExecuteChanged();
             ExportToExcelCommand.NotifyCanExecuteChanged();
@@ -178,11 +180,16 @@ namespace Reckoner.ViewModels
                             day.AllTimeHighs[asset.TickerSymbol] = runningHigh;
                         }
                     }
+                    var holdingTickers = _simSettings.TryGetValue(kv.Key, out var settings)
+                        ? settings.Holdings.Select(h => h.TickerSymbol).Distinct().ToList()
+                        : new List<string>();
+
                     return new SimulationRunExport
                     {
-                        Name = _simSettings.TryGetValue(kv.Key, out var s) ? s.Name : $"Run {kv.Key + 1}",
+                        Name = settings != null ? settings.Name : $"Run {kv.Key + 1}",
                         Days = kv.Value,
                         TrackedTickers = trackedTickers,
+                        HoldingTickers = holdingTickers,
                     };
                 })
                 .ToList();
@@ -292,7 +299,7 @@ namespace Reckoner.ViewModels
                 new DateTimeAxis(TimeSpan.FromDays(1), date =>
                     date.Month == 1 && date.Day <= 7
                         ? date.ToString("yyyy")
-                        : date.ToString("MMM ''yy"))
+                        : date.ToString("MMM yyyy"))
                 {
                     MinStep = TimeSpan.FromDays(28).Ticks,
                     LabelsRotation = -45,
@@ -376,6 +383,19 @@ namespace Reckoner.ViewModels
                     // Closes/AllTimeHighs are filled in later, at export time — see BuildExportRuns.
                     // That way "Track in Export" reflects whatever's checked *when you export*,
                     // not whatever was checked back when this run happened to be playing.
+                    //
+                    // HoldingShares/HoldingPrices/ReferenceHighs cover the account's real holdings
+                    // instead, and must be captured live, right here — they reflect this exact
+                    // day's actual state (shares held, price traded at, and the strategy's own
+                    // internal high-water-mark), which can't be reconstructed later.
+                    var holdingShares = new Dictionary<string, decimal>();
+                    var holdingPrices = new Dictionary<string, decimal>();
+                    foreach (var asset in _accountService.Assets)
+                    {
+                        holdingShares[asset.TickerSymbol] = asset.NumberOfShares;
+                        holdingPrices[asset.TickerSymbol] = asset.GetLatestPrice();
+                    }
+
                     dayResults.Add(new SimulationDayResult
                     {
                         Date = date.GetValueOrDefault(),
@@ -383,6 +403,9 @@ namespace Reckoner.ViewModels
                         Balance = balanceToday,
                         Cash = cashToday,
                         Contribution = _accountService.LastContribution,
+                        HoldingShares = holdingShares,
+                        HoldingPrices = holdingPrices,
+                        ReferenceHighs = new Dictionary<string, decimal>(_accountService.InvestmentStrategyService.EvaluationHighs),
                     });
 
                     var y = Math.Round((double)balanceToday, 2);
@@ -413,6 +436,7 @@ namespace Reckoner.ViewModels
                 var finalPoints = new List<DateTimePoint>(allPoints);
                 await _dispatcher.ExecuteOnMainThreadAsync(() => series.Values = finalPoints);
                 _simDayResults[_numLinesUsed] = dayResults;
+                _referenceTickers[_numLinesUsed] = simSettingsVM.SelectedFwTicker?.TickerSymbol;
             });
 
             _quitSimulation = false;
@@ -433,7 +457,97 @@ namespace Reckoner.ViewModels
             {
                 TogglePlayPauseCommand.NotifyCanExecuteChanged();
                 ExportToExcelCommand.NotifyCanExecuteChanged();
+                if (!wasCancelled) RebuildEvents();
             });
+        }
+
+        // One row per Buy/Sell transition, across every run so far — the exact date, and every
+        // held ticker's price that day, so a chart dip can be pinned to a real date+row instead
+        // of guessed off an unlabeled axis.
+        private readonly Dictionary<int, string?> _referenceTickers = new();
+
+        [ObservableProperty] private ObservableCollection<AnalystChartEvent> events = new();
+        [ObservableProperty] private AnalystChartEvent? selectedEvent;
+
+        partial void OnSelectedEventChanged(AnalystChartEvent? value)
+        {
+            if (value != null) ZoomToEvent(value);
+        }
+
+        [RelayCommand]
+        private void ZoomToEvent(AnalystChartEvent evt)
+        {
+            if (evt == null) return;
+            XAxes = new Axis[]
+            {
+                new DateTimeAxis(TimeSpan.FromDays(1), date => date.ToString("MMM d, yyyy"))
+                {
+                    MinStep = TimeSpan.FromDays(1).Ticks,
+                    LabelsRotation = -45,
+                    TextSize = 11,
+                    MinLimit = evt.Date.AddDays(-60).Ticks,
+                    MaxLimit = evt.Date.AddDays(60).Ticks,
+                }
+            };
+        }
+
+        [RelayCommand]
+        private void ResetZoom()
+        {
+            XAxes = new Axis[]
+            {
+                new DateTimeAxis(TimeSpan.FromDays(1), date =>
+                    date.Month == 1 && date.Day <= 7 ? date.ToString("yyyy") : date.ToString("MMM yyyy"))
+                {
+                    MinStep = TimeSpan.FromDays(28).Ticks,
+                    LabelsRotation = -45,
+                    TextSize = 11,
+                }
+            };
+        }
+
+        private void RebuildEvents()
+        {
+            var built = _simDayResults
+                .OrderBy(kv => kv.Key)
+                .SelectMany(kv =>
+                {
+                    string name = _simSettings.TryGetValue(kv.Key, out var s) ? s.Name : $"Run {kv.Key + 1}";
+                    _referenceTickers.TryGetValue(kv.Key, out var refTicker);
+                    return BuildEvents(name, kv.Value, refTicker);
+                })
+                .OrderBy(e => e.Date)
+                .ToList();
+
+            Events = new ObservableCollection<AnalystChartEvent>(built);
+        }
+
+        // Prices come from HoldingPrices (captured live, per real holding) rather than Closes —
+        // Closes here stays empty until export time (see BuildExportRuns), so it isn't ready yet
+        // the moment a run finishes and this gets called.
+        private static IEnumerable<AnalystChartEvent> BuildEvents(string scenarioName, List<SimulationDayResult> days, string? referenceTicker)
+        {
+            for (int i = 0; i < days.Count; i++)
+            {
+                bool isSellOff = days[i].Action == SuggestedAction.Sell;
+                bool wasSellOff = i > 0 && days[i - 1].Action == SuggestedAction.Sell;
+                if (isSellOff == wasSellOff) continue;
+
+                var day = days[i];
+                decimal? referencePrice = referenceTicker != null && day.HoldingPrices.TryGetValue(referenceTicker, out var p)
+                    ? p
+                    : null;
+                yield return new AnalystChartEvent
+                {
+                    ScenarioName = scenarioName,
+                    Date = day.Date,
+                    EventType = isSellOff ? "Sold" : "Bought Back",
+                    ReferenceTicker = referenceTicker,
+                    ReferencePrice = referencePrice,
+                    AllPrices = string.Join(", ", day.HoldingPrices.Select(kv =>
+                        $"{kv.Key}{(kv.Key == referenceTicker ? "★" : "")}: {kv.Value:C2}")),
+                };
+            }
         }
 
         
@@ -598,7 +712,7 @@ namespace Reckoner.ViewModels
                     new DateTimeAxis(TimeSpan.FromDays(1), date =>
                         date.Month == 1 && date.Day <= 7
                             ? date.ToString("yyyy")
-                            : date.ToString("MMM ''yy"))
+                            : date.ToString("MMM yyyy"))
                     {
                         MinStep = TimeSpan.FromDays(28).Ticks,
                         LabelsRotation = -45,

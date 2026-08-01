@@ -98,7 +98,10 @@ namespace Reckoner.Services
       if (_dividends.TryGetValue(today, out decimal value))
       {
         Debug.WriteLine($"Got dividend for Date: {today} ");
-        return BuyInDollars(value);
+        if (value > 0)
+        {
+            return BuyInDollars(value);
+        }
       }
       return 0;
     }

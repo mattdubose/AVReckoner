@@ -31,6 +31,10 @@
                 Classes="primary"
                 Command="{Binding RunAllCommand}"
                 Content="▶ Run All" />
+            <Button
+                Command="{Binding ExportToExcelCommand}"
+                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
+                Content="📊 Export to Excel" />
             <TextBlock
                 VerticalAlignment="Center"
                 FontStyle="Italic"

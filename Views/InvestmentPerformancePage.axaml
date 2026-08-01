@@ -334,5 +334,42 @@
             </Border>
         </Grid>
 
+        <Grid Grid.Row="2" Margin="0,8,0,0" RowDefinitions="Auto,150">
+            <StackPanel
+                Grid.Row="0"
+                Margin="0,0,0,4"
+                Orientation="Horizontal"
+                Spacing="8">
+                <Button Command="{Binding ResetZoomCommand}" Content="Reset Zoom" />
+                <TextBlock
+                    VerticalAlignment="Center"
+                    Foreground="Gray"
+                    FontStyle="Italic"
+                    Text="Click a row below to jump the chart to that exact date." />
+            </StackPanel>
+            <Border
+                Grid.Row="1"
+                Padding="5"
+                Background="White"
+                BorderBrush="Gray"
+                BorderThickness="1"
+                CornerRadius="8">
+                <DataGrid
+                    AutoGenerateColumns="False"
+                    CanUserSortColumns="True"
+                    IsReadOnly="True"
+                    ItemsSource="{Binding Events}"
+                    SelectedItem="{Binding SelectedEvent}">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Width="130" Binding="{Binding ScenarioName}" Header="Scenario" />
+                        <DataGridTextColumn Width="100" Binding="{Binding Date, StringFormat={}{0:MM/dd/yyyy}}" Header="Date" />
+                        <DataGridTextColumn Width="90" Binding="{Binding EventType}" Header="Event" />
+                        <DataGridTextColumn Width="120" Binding="{Binding ReferencePrice, StringFormat={}{0:C}}" Header="Ref. Price" />
+                        <DataGridTextColumn Width="*" Binding="{Binding AllPrices}" Header="All Equities" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Border>
+        </Grid>
+
     </Grid>
 </UserControl>

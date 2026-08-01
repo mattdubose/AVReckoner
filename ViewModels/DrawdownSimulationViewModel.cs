@@ -73,7 +73,7 @@ namespace Reckoner.ViewModels
                     new DateTimeAxis(TimeSpan.FromDays(1), date =>
                         date.Month == 1 && date.Day <= 7
                             ? date.ToString("yyyy")
-                            : date.ToString("MMM ''yy"))
+                            : date.ToString("MMM yyyy"))
                     {
                         MinStep = TimeSpan.FromDays(28).Ticks,
                         LabelsRotation = -45,

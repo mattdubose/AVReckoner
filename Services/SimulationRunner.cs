@@ -27,8 +27,12 @@ namespace Reckoner.Services
                 // Preload) and lets callers build a "what happened on this date" view without a
                 // second pass over the date range.
                 var closes = new Dictionary<string, decimal>();
+                var holdingShares = new Dictionary<string, decimal>();
                 foreach (var asset in accountService.Assets)
+                {
                     closes[asset.TickerSymbol] = asset.GetLatestPrice();
+                    holdingShares[asset.TickerSymbol] = asset.NumberOfShares;
+                }
 
                 results.Add(new SimulationDayResult
                 {
@@ -38,6 +42,9 @@ namespace Reckoner.Services
                     Cash = cash,
                     Contribution = accountService.LastContribution,
                     Closes = closes,
+                    HoldingShares = holdingShares,
+                    HoldingPrices = closes,
+                    ReferenceHighs = new Dictionary<string, decimal>(accountService.InvestmentStrategyService.EvaluationHighs),
                 });
             }
             return results;

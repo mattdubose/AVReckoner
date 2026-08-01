@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Platform.Storage;
 using LiveChartsCore;
 using LiveChartsCore.Defaults;
 using LiveChartsCore.SkiaSharpView;
@@ -36,6 +37,8 @@ namespace Reckoner.ViewModels
         public decimal EndBalance { get; set; }
         public List<SimulationDayResult> Days { get; set; } = new();
         public string? ReferenceTicker { get; set; }
+        /// This scenario's actual holdings — drives the Shares/Price/Reference-High columns on export.
+        public List<string> HoldingTickers { get; set; } = new();
     }
 
     // A Buy/Sell transition day, with every held ticker's price that day — the "what actually
@@ -78,7 +81,7 @@ namespace Reckoner.ViewModels
         [ObservableProperty] private RectangularSection[] detailSections = Array.Empty<RectangularSection>();
         [ObservableProperty] private Axis[] detailXAxes = new Axis[]
         {
-            new DateTimeAxis(TimeSpan.FromDays(1), date => date.ToString("MMM ''yy"))
+            new DateTimeAxis(TimeSpan.FromDays(1), date => date.ToString("MMM yyyy"))
             {
                 MinStep = TimeSpan.FromDays(28).Ticks,
                 LabelsRotation = -45,
@@ -185,7 +188,49 @@ namespace Reckoner.ViewModels
 
         private bool CanRunAll() => Scenarios.Count > 0 && !IsRunning;
 
-        partial void OnIsRunningChanged(bool value) => RunAllCommand.NotifyCanExecuteChanged();
+        partial void OnIsRunningChanged(bool value)
+        {
+            RunAllCommand.NotifyCanExecuteChanged();
+            ExportToExcelCommand.NotifyCanExecuteChanged();
+        }
+
+        partial void OnResultsChanged(ObservableCollection<AnalystResultRow> value) => ExportToExcelCommand.NotifyCanExecuteChanged();
+
+        private bool CanExportToExcel() => Results.Count > 0 && !IsRunning;
+
+        [RelayCommand(CanExecute = nameof(CanExportToExcel))]
+        private async Task ExportToExcel(TopLevel root)
+        {
+            if (root is not Window owner) return;
+
+            var file = await owner.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+            {
+                Title = "Export Scenario Results",
+                SuggestedFileName = $"AnalystScenarios_{DateTime.Now:yyyyMMdd_HHmmss}",
+                DefaultExtension = "xlsx",
+                FileTypeChoices = new[]
+                {
+                    new FilePickerFileType("Excel Workbook") { Patterns = new[] { "*.xlsx" } }
+                }
+            });
+            if (file == null) return;
+
+            try
+            {
+                var runs = Results.Select(r => new SimulationRunExport
+                {
+                    Name = r.Name,
+                    Days = r.Days,
+                    HoldingTickers = r.HoldingTickers,
+                }).ToList();
+                await Task.Run(() => ExcelExportService.ExportRuns(file.Path.LocalPath, runs));
+            }
+            catch (Exception ex)
+            {
+                RunError = $"Excel export failed: {ex.Message}";
+                HasRunError = true;
+            }
+        }
 
         [RelayCommand(CanExecute = nameof(CanRunAll))]
         private async Task RunAll()
@@ -214,6 +259,8 @@ namespace Reckoner.ViewModels
                             EndBalance = days.Count > 0 ? days[^1].Balance : 0,
                             Days = days,
                             ReferenceTicker = slot.SimSettingsVM.SelectedFwTicker?.TickerSymbol,
+                            HoldingTickers = slot.SimSettingsVM.ActiveSimSettings.Holdings
+                                .Select(h => h.TickerSymbol).Distinct().ToList(),
                         };
                     });
                     newResults.Add(row);
@@ -324,7 +371,7 @@ namespace Reckoner.ViewModels
             if (evt == null) return;
             DetailXAxes = new Axis[]
             {
-                new DateTimeAxis(TimeSpan.FromDays(1), date => date.ToString("MMM d ''yy"))
+                new DateTimeAxis(TimeSpan.FromDays(1), date => date.ToString("MMM d, yyyy"))
                 {
                     MinStep = TimeSpan.FromDays(1).Ticks,
                     LabelsRotation = -45,
@@ -341,7 +388,7 @@ namespace Reckoner.ViewModels
             DetailXAxes = new Axis[]
             {
                 new DateTimeAxis(TimeSpan.FromDays(1), date =>
-                    date.Month == 1 && date.Day <= 7 ? date.ToString("yyyy") : date.ToString("MMM ''yy"))
+                    date.Month == 1 && date.Day <= 7 ? date.ToString("yyyy") : date.ToString("MMM yyyy"))
                 {
                     MinStep = TimeSpan.FromDays(28).Ticks,
                     LabelsRotation = -45,

@@ -30,6 +30,10 @@ namespace Reckoner.Services
          * just do this highsForEvaluation so we can get a proof of concept. 
          */
         Dictionary<string, decimal> highsForEvaluation = new Dictionary<string, decimal>();
+        /// The strategy's own internal high-water-mark per ticker, as of the last evaluation —
+        /// this is what sell/buy decisions are actually compared against, as opposed to any
+        /// independently recomputed "all-time high" elsewhere.
+        public IReadOnlyDictionary<string, decimal> EvaluationHighs => highsForEvaluation;
         private StrategyState _curState;
         private bool disableEvaluation = false;
         private List<AssetService> _assets;
