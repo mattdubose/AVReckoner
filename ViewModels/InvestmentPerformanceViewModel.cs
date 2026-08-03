@@ -89,7 +89,7 @@ namespace Reckoner.ViewModels
             });
             _numLinesUsed = 0;
             _simDayResults.Clear();
-            _referenceTickers.Clear();
+            _episodesByRun.Clear();
             Events.Clear();
             SimulationHasResults = false;
             TogglePlayPauseCommand.NotifyCanExecuteChanged();
@@ -436,7 +436,10 @@ namespace Reckoner.ViewModels
                 var finalPoints = new List<DateTimePoint>(allPoints);
                 await _dispatcher.ExecuteOnMainThreadAsync(() => series.Values = finalPoints);
                 _simDayResults[_numLinesUsed] = dayResults;
-                _referenceTickers[_numLinesUsed] = simSettingsVM.SelectedFwTicker?.TickerSymbol;
+                var episodes = new List<StrategyEpisode>(_accountService.CompletedEpisodes);
+                if (_accountService.CurrentEpisode != null)
+                    episodes.Add(_accountService.CurrentEpisode);
+                _episodesByRun[_numLinesUsed] = episodes;
             });
 
             _quitSimulation = false;
@@ -461,21 +464,21 @@ namespace Reckoner.ViewModels
             });
         }
 
-        // One row per Buy/Sell transition, across every run so far — the exact date, and every
-        // held ticker's price that day, so a chart dip can be pinned to a real date+row instead
-        // of guessed off an unlabeled axis.
-        private readonly Dictionary<int, string?> _referenceTickers = new();
+        // Real sell-off/buy-back episodes, per run so far — see AccountService.CompletedEpisodes.
+        // Captured live when each run finishes (episodes live on _accountService, which gets
+        // reset — see SimulationSettingsViewModel.SetSelections — before the next run starts).
+        private readonly Dictionary<int, List<StrategyEpisode>> _episodesByRun = new();
 
-        [ObservableProperty] private ObservableCollection<AnalystChartEvent> events = new();
-        [ObservableProperty] private AnalystChartEvent? selectedEvent;
+        [ObservableProperty] private ObservableCollection<EpisodeRow> events = new();
+        [ObservableProperty] private EpisodeRow? selectedEvent;
 
-        partial void OnSelectedEventChanged(AnalystChartEvent? value)
+        partial void OnSelectedEventChanged(EpisodeRow? value)
         {
             if (value != null) ZoomToEvent(value);
         }
 
         [RelayCommand]
-        private void ZoomToEvent(AnalystChartEvent evt)
+        private void ZoomToEvent(EpisodeRow evt)
         {
             if (evt == null) return;
             XAxes = new Axis[]
@@ -485,10 +488,21 @@ namespace Reckoner.ViewModels
                     MinStep = TimeSpan.FromDays(1).Ticks,
                     LabelsRotation = -45,
                     TextSize = 11,
-                    MinLimit = evt.Date.AddDays(-60).Ticks,
-                    MaxLimit = evt.Date.AddDays(60).Ticks,
+                    MinLimit = evt.StartDate.AddDays(-60).Ticks,
+                    MaxLimit = evt.StartDate.AddDays(60).Ticks,
                 }
             };
+        }
+
+        // Opens the detail popup for a double-clicked event row — called from code-behind since
+        // DataGrid doesn't have a built-in double-click-to-command binding.
+        public async Task ShowEpisodeDetail(EpisodeRow row, Window owner)
+        {
+            var win = new Views.EpisodeDetailWindow
+            {
+                DataContext = new EpisodeDetailViewModel(row.Episode)
+            };
+            await win.ShowDialog(owner);
         }
 
         [RelayCommand]
@@ -508,46 +522,17 @@ namespace Reckoner.ViewModels
 
         private void RebuildEvents()
         {
-            var built = _simDayResults
+            var built = _episodesByRun
                 .OrderBy(kv => kv.Key)
                 .SelectMany(kv =>
                 {
                     string name = _simSettings.TryGetValue(kv.Key, out var s) ? s.Name : $"Run {kv.Key + 1}";
-                    _referenceTickers.TryGetValue(kv.Key, out var refTicker);
-                    return BuildEvents(name, kv.Value, refTicker);
+                    return kv.Value.Select(ep => new EpisodeRow { ScenarioName = name, Episode = ep });
                 })
-                .OrderBy(e => e.Date)
+                .OrderBy(e => e.StartDate)
                 .ToList();
 
-            Events = new ObservableCollection<AnalystChartEvent>(built);
-        }
-
-        // Prices come from HoldingPrices (captured live, per real holding) rather than Closes —
-        // Closes here stays empty until export time (see BuildExportRuns), so it isn't ready yet
-        // the moment a run finishes and this gets called.
-        private static IEnumerable<AnalystChartEvent> BuildEvents(string scenarioName, List<SimulationDayResult> days, string? referenceTicker)
-        {
-            for (int i = 0; i < days.Count; i++)
-            {
-                bool isSellOff = days[i].Action == SuggestedAction.Sell;
-                bool wasSellOff = i > 0 && days[i - 1].Action == SuggestedAction.Sell;
-                if (isSellOff == wasSellOff) continue;
-
-                var day = days[i];
-                decimal? referencePrice = referenceTicker != null && day.HoldingPrices.TryGetValue(referenceTicker, out var p)
-                    ? p
-                    : null;
-                yield return new AnalystChartEvent
-                {
-                    ScenarioName = scenarioName,
-                    Date = day.Date,
-                    EventType = isSellOff ? "Sold" : "Bought Back",
-                    ReferenceTicker = referenceTicker,
-                    ReferencePrice = referencePrice,
-                    AllPrices = string.Join(", ", day.HoldingPrices.Select(kv =>
-                        $"{kv.Key}{(kv.Key == referenceTicker ? "★" : "")}: {kv.Value:C2}")),
-                };
-            }
+            Events = new ObservableCollection<EpisodeRow>(built);
         }
 
         

@@ -18,13 +18,47 @@ namespace Reckoner.Services
     // can log a per-day Buy/Sell/Hold + contribution amount without re-deriving it.
     public SuggestedAction LastAction { get; private set; } = SuggestedAction.Hold;
     public decimal LastContribution { get; private set; } = 0m;
-    public AccountService(Account myAccount, List<AssetService> RTAssets) 
+    public AccountService(Account myAccount, List<AssetService> RTAssets)
     {
         _account = myAccount;
         Assets = RTAssets;
         InvestmentStrategyService = new FWInvestmentStrategy (Assets, _account.StrategyConfiguration);
     }
     public decimal AllTimeHigh { get; private set; } = 0;
+
+    public const string CashTicker = "CASH";
+
+    // Sell-off episodes the strategy has gone through, oldest first — see HandleInvestmentStrategy.
+    public List<StrategyEpisode> CompletedEpisodes { get; } = new();
+    public StrategyEpisode? CurrentEpisode { get; private set; }
+    // Closed today (EndDate/ExitReason already set) but HoldingsAtEnd can't be captured until
+    // this RunDaysActivities() call finishes — the actual buy-back trade hasn't executed yet at
+    // the point HandleInvestmentStrategy() decides to close the episode (see HandleStackedActivities).
+    private StrategyEpisode? _episodeAwaitingFinalization;
+
+    // AccountService instances get reused across repeated "run simulation" clicks (see
+    // SimulationSettingsViewModel.SetSelections, which resets Assets/InvestmentStrategyService
+    // the same way) — without this, a second run would inherit episodes left over from the first.
+    public void ResetEpisodes()
+    {
+        CompletedEpisodes.Clear();
+        CurrentEpisode = null;
+        _episodeAwaitingFinalization = null;
+    }
+
+    // Portfolio snapshot including cash as a pseudo-ticker (Price == 1) — for StrategyEpisode's
+    // HoldingsAtStart/HoldingsAtEnd, so "what did the account hold" is one complete list.
+    private List<TickerSnapshot> BuildHoldingsSnapshot()
+    {
+        var snapshot = Assets.Select(a => new TickerSnapshot
+        {
+            Ticker = a.TickerSymbol,
+            Price = a.GetLatestPrice(),
+            Shares = a.NumberOfShares,
+        }).ToList();
+        snapshot.Add(new TickerSnapshot { Ticker = CashTicker, Price = 1m, Shares = _account.CashBalance });
+        return snapshot;
+    }
 
     /// <summary>
     /// Pre-warms all asset price and corporate action caches for the full sim range.
@@ -141,11 +175,14 @@ namespace Reckoner.Services
         DateTime today = DateTimeService.GetInstance.GetCurrentDate();
         LastAction = SuggestedAction.Hold;
         LastContribution = 0m;
+        // Holdings as of the start of today, before anything below can touch them — this is what
+        // a newly-opened episode's HoldingsAtStart should reflect (see HandleInvestmentStrategy).
+        var openingHoldings = BuildHoldingsSnapshot();
         HandleCorporateActions(today);
         //wmdTODO      ExecuteEvaluation();
-        if (_account.Strategy == Models.InvestmentStrategy.FWStrategy) 
+        if (_account.Strategy == Models.InvestmentStrategy.FWStrategy)
         {
-            HandleInvestmentStrategy();
+            HandleInvestmentStrategy(openingHoldings);
         }
         HandleStackedActivities();
         if (_account == null) 
@@ -218,19 +255,34 @@ namespace Reckoner.Services
             }
           }
         }
-        foreach (var service in Assets) 
+        foreach (var service in Assets)
         {
           service.DividendReinvestment(today);
         }
 
+        // Now that today's trades (including any stacked buy-back contribution) have actually
+        // executed, an episode closed earlier this call can finally get its ending snapshot.
+        if (_episodeAwaitingFinalization != null)
+        {
+            _episodeAwaitingFinalization.HoldingsAtEnd = BuildHoldingsSnapshot();
+            CompletedEpisodes.Add(_episodeAwaitingFinalization);
+            _episodeAwaitingFinalization = null;
+        }
     }
 
-        private void HandleInvestmentStrategy()
+        private void HandleInvestmentStrategy(List<TickerSnapshot> openingHoldings)
         {
             _latestAction = InvestmentStrategyService.DetermineActionOnAccount();
             LastAction = _latestAction;
             if (_latestAction == SuggestedAction.Buy)
             {
+                if (CurrentEpisode != null)
+                {
+                    CurrentEpisode.EndDate = DateTimeService.GetInstance.GetCurrentDate();
+                    CurrentEpisode.ExitReason = InvestmentStrategyService.LastReason;
+                    _episodeAwaitingFinalization = CurrentEpisode;
+                    CurrentEpisode = null;
+                }
                 if (_account.CashBalance > 0)
                 {
                     _account.StackedActivities.Add(new ActivityHolder(Models.Action.Contribution, _account.CashBalance,  DateTimeService.GetInstance.GetCurrentDate()));
@@ -240,7 +292,15 @@ namespace Reckoner.Services
             }
             else if (_latestAction == SuggestedAction.Sell)
             { /* pull everything to a stacked attivity */
-                decimal cumAmount = 0;
+                if (CurrentEpisode == null)
+                {
+                    CurrentEpisode = new StrategyEpisode
+                    {
+                        StartDate = DateTimeService.GetInstance.GetCurrentDate(),
+                        EntryReason = InvestmentStrategyService.LastReason,
+                        HoldingsAtStart = openingHoldings,
+                    };
+                }
                 foreach (var asset in Assets)
                 {
                     if (asset.NumberOfShares > 0)

@@ -203,6 +203,7 @@ namespace Reckoner.ViewModels
                 account.Assets.Add(h);
             }
             _accountService.Assets = SLMarketSecurityHelper.BuildAssetServices(account);
+            _accountService.ResetEpisodes();
             if (ActiveSimSettings.Strategy == InvestmentStrategy.FWStrategy)
             {
                 foreach (var asset in _accountService.Assets)

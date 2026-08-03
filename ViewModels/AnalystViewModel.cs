@@ -39,18 +39,8 @@ namespace Reckoner.ViewModels
         public string? ReferenceTicker { get; set; }
         /// This scenario's actual holdings — drives the Shares/Price/Reference-High columns on export.
         public List<string> HoldingTickers { get; set; } = new();
-    }
-
-    // A Buy/Sell transition day, with every held ticker's price that day — the "what actually
-    // happened on this date" detail the chart alone can't show at a glance.
-    public partial class AnalystChartEvent : ObservableObject
-    {
-        public string ScenarioName { get; set; } = string.Empty;
-        public DateTime Date { get; set; }
-        public string EventType { get; set; } = string.Empty; // "Sold" or "Bought Back"
-        public string? ReferenceTicker { get; set; }
-        public decimal? ReferencePrice { get; set; }
-        public string AllPrices { get; set; } = string.Empty;
+        /// The strategy's real sell-off/buy-back episodes for this run — see AccountService.CompletedEpisodes.
+        public List<StrategyEpisode> Episodes { get; set; } = new();
     }
 
     public partial class AnalystViewModel : BaseViewModel
@@ -74,8 +64,8 @@ namespace Reckoner.ViewModels
         [ObservableProperty] private string runError = string.Empty;
         [ObservableProperty] private bool hasRunError;
 
-        [ObservableProperty] private ObservableCollection<AnalystChartEvent> events = new();
-        [ObservableProperty] private AnalystChartEvent? selectedEvent;
+        [ObservableProperty] private ObservableCollection<EpisodeRow> events = new();
+        [ObservableProperty] private EpisodeRow? selectedEvent;
 
         [ObservableProperty] private ISeries[] detailSeries = Array.Empty<ISeries>();
         [ObservableProperty] private RectangularSection[] detailSections = Array.Empty<RectangularSection>();
@@ -253,6 +243,9 @@ namespace Reckoner.ViewModels
                         DateTime start = slot.SimSettingsVM.ActiveSimSettings.StartDateOffset?.DateTime ?? DateTime.Now;
                         DateTime end = slot.SimSettingsVM.ActiveSimSettings.EndDateOffset?.DateTime ?? DateTime.Now;
                         var days = SimulationRunner.Run(slot.AccountService, start, end);
+                        var episodes = new List<StrategyEpisode>(slot.AccountService.CompletedEpisodes);
+                        if (slot.AccountService.CurrentEpisode != null)
+                            episodes.Add(slot.AccountService.CurrentEpisode);
                         return new AnalystResultRow
                         {
                             Name = slot.SimSettingsVM.ActiveSimSettings.Name,
@@ -261,6 +254,7 @@ namespace Reckoner.ViewModels
                             ReferenceTicker = slot.SimSettingsVM.SelectedFwTicker?.TickerSymbol,
                             HoldingTickers = slot.SimSettingsVM.ActiveSimSettings.Holdings
                                 .Select(h => h.TickerSymbol).Distinct().ToList(),
+                            Episodes = episodes,
                         };
                     });
                     newResults.Add(row);
@@ -318,12 +312,14 @@ namespace Reckoner.ViewModels
             // pad it out to a visible minimum width and use a stronger fill so it still reads as
             // "eye popping" rather than disappearing at the current zoom level.
             DetailSections = selected
-                .SelectMany(row => GetSellOffRanges(row.Days))
-                .Select(range =>
+                .SelectMany(row => row.Episodes.Select(ep => (row, ep)))
+                .Select(x =>
                 {
-                    var padded = range.end - range.start < TimeSpan.FromDays(10)
-                        ? (range.start.AddDays(-5), range.end.AddDays(5))
-                        : range;
+                    DateTime start = x.ep.StartDate;
+                    DateTime end = x.ep.EndDate ?? (x.row.Days.Count > 0 ? x.row.Days[^1].Date : start);
+                    var padded = end - start < TimeSpan.FromDays(10)
+                        ? (start.AddDays(-5), end.AddDays(5))
+                        : (start, end);
                     return new RectangularSection
                     {
                         Xi = padded.Item1.Ticks,
@@ -333,40 +329,14 @@ namespace Reckoner.ViewModels
                 })
                 .ToArray();
 
-            Events = new ObservableCollection<AnalystChartEvent>(
-                selected.SelectMany(row => BuildEvents(row))
-                    .OrderBy(e => e.Date));
-        }
-
-        // One row per Buy/Sell transition — the exact date, and every held ticker's price that
-        // day, so you don't have to pixel-hunt on the chart to see what actually triggered it.
-        private static IEnumerable<AnalystChartEvent> BuildEvents(AnalystResultRow row)
-        {
-            for (int i = 0; i < row.Days.Count; i++)
-            {
-                bool isSellOff = row.Days[i].Action == SuggestedAction.Sell;
-                bool wasSellOff = i > 0 && row.Days[i - 1].Action == SuggestedAction.Sell;
-                if (isSellOff == wasSellOff) continue;
-
-                var day = row.Days[i];
-                decimal? referencePrice = row.ReferenceTicker != null && day.Closes.TryGetValue(row.ReferenceTicker, out var p)
-                    ? p
-                    : null;
-                yield return new AnalystChartEvent
-                {
-                    ScenarioName = row.Name,
-                    Date = day.Date,
-                    EventType = isSellOff ? "Sold" : "Bought Back",
-                    ReferenceTicker = row.ReferenceTicker,
-                    ReferencePrice = referencePrice,
-                    AllPrices = string.Join(", ", day.Closes.Select(kv =>
-                        $"{kv.Key}{(kv.Key == row.ReferenceTicker ? "★" : "")}: {kv.Value:C2}")),
-                };
-            }
+            Events = new ObservableCollection<EpisodeRow>(
+                selected
+                    .SelectMany(row => row.Episodes.Select(ep => new EpisodeRow { ScenarioName = row.Name, Episode = ep }))
+                    .OrderBy(e => e.StartDate));
         }
 
         [RelayCommand]
-        private void ZoomToEvent(AnalystChartEvent evt)
+        private void ZoomToEvent(EpisodeRow evt)
         {
             if (evt == null) return;
             DetailXAxes = new Axis[]
@@ -376,10 +346,21 @@ namespace Reckoner.ViewModels
                     MinStep = TimeSpan.FromDays(1).Ticks,
                     LabelsRotation = -45,
                     TextSize = 11,
-                    MinLimit = evt.Date.AddDays(-60).Ticks,
-                    MaxLimit = evt.Date.AddDays(60).Ticks,
+                    MinLimit = evt.StartDate.AddDays(-60).Ticks,
+                    MaxLimit = evt.StartDate.AddDays(60).Ticks,
                 }
             };
+        }
+
+        // Opens the detail popup for a double-clicked event row — called from code-behind since
+        // DataGrid doesn't have a built-in double-click-to-command binding.
+        public async Task ShowEpisodeDetail(EpisodeRow row, Window owner)
+        {
+            var win = new Views.EpisodeDetailWindow
+            {
+                DataContext = new EpisodeDetailViewModel(row.Episode)
+            };
+            await win.ShowDialog(owner);
         }
 
         [RelayCommand]
@@ -397,29 +378,9 @@ namespace Reckoner.ViewModels
             };
         }
 
-        partial void OnSelectedEventChanged(AnalystChartEvent? value)
+        partial void OnSelectedEventChanged(EpisodeRow? value)
         {
             if (value != null) ZoomToEvent(value);
-        }
-
-        // Contiguous (start, end) date ranges where the day's Action was Sell.
-        private static IEnumerable<(DateTime start, DateTime end)> GetSellOffRanges(List<SimulationDayResult> days)
-        {
-            DateTime? rangeStart = null;
-            for (int i = 0; i < days.Count; i++)
-            {
-                bool isSellOff = days[i].Action == SuggestedAction.Sell;
-                if (isSellOff && rangeStart == null)
-                {
-                    rangeStart = days[i].Date;
-                }
-                else if (!isSellOff && rangeStart != null)
-                {
-                    yield return (rangeStart.Value, days[i - 1].Date);
-                    rangeStart = null;
-                }
-            }
-            if (rangeStart != null) yield return (rangeStart.Value, days[^1].Date);
         }
     }
 }

@@ -243,7 +243,7 @@
             </ScrollViewer>
 
             <!--  Results + drill-down  -->
-            <Grid Grid.Column="1" RowDefinitions="Auto,Auto,2*,Auto,Auto,150">
+            <Grid Grid.Column="1" RowDefinitions="Auto,Auto,2*,Auto,Auto,100">
                 <TextBlock
                     Grid.Row="0"
                     Margin="0,0,0,4"
@@ -306,7 +306,7 @@
                     Grid.Row="4"
                     Margin="0,0,0,4"
                     FontWeight="Bold"
-                    Text="Buy/Sell Events (★ = reference ticker)" />
+                    Text="Sell-off Episodes (double-click a row for details)" />
 
                 <Border
                     Grid.Row="5"
@@ -316,17 +316,19 @@
                     BorderThickness="1"
                     CornerRadius="8">
                     <DataGrid
+                        Name="EpisodesGrid"
                         AutoGenerateColumns="False"
                         CanUserSortColumns="True"
+                        DoubleTapped="EpisodesGrid_DoubleTapped"
                         IsReadOnly="True"
                         ItemsSource="{Binding Events}"
                         SelectedItem="{Binding SelectedEvent}">
                         <DataGrid.Columns>
                             <DataGridTextColumn Width="130" Binding="{Binding ScenarioName}" Header="Scenario" />
-                            <DataGridTextColumn Width="100" Binding="{Binding Date, StringFormat={}{0:MM/dd/yyyy}}" Header="Date" />
-                            <DataGridTextColumn Width="90" Binding="{Binding EventType}" Header="Event" />
-                            <DataGridTextColumn Width="120" Binding="{Binding ReferencePrice, StringFormat={}{0:C}}" Header="Ref. Price" />
-                            <DataGridTextColumn Width="*" Binding="{Binding AllPrices}" Header="All Equities" />
+                            <DataGridTextColumn Width="100" Binding="{Binding StartDate, StringFormat={}{0:MM/dd/yyyy}}" Header="Sold Off" />
+                            <DataGridTextColumn Width="100" Binding="{Binding EndDate, StringFormat={}{0:MM/dd/yyyy}}" Header="Bought Back" />
+                            <DataGridTextColumn Width="120" Binding="{Binding EntryReasonCode}" Header="Entry Reason" />
+                            <DataGridTextColumn Width="*" Binding="{Binding ExitReasonCode}" Header="Exit Reason" />
                         </DataGrid.Columns>
                     </DataGrid>
                 </Border>

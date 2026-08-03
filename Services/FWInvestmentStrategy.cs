@@ -34,6 +34,12 @@ namespace Reckoner.Services
         /// this is what sell/buy decisions are actually compared against, as opposed to any
         /// independently recomputed "all-time high" elsewhere.
         public IReadOnlyDictionary<string, decimal> EvaluationHighs => highsForEvaluation;
+
+        /// The reason behind whatever Sell/Buy transition just happened in the most recent
+        /// DetermineActionOnAccount() call — null when that call didn't cause a transition.
+        /// AccountService reads this immediately after calling DetermineActionOnAccount() to
+        /// open/close a StrategyEpisode; it isn't meant to be consulted on any other day.
+        public EpisodeReason? LastReason { get; private set; }
         private StrategyState _curState;
         private bool disableEvaluation = false;
         private List<AssetService> _assets;
@@ -74,8 +80,17 @@ namespace Reckoner.Services
                 // If we have been out of the market for too long, we will buy back regardless of price.
                 Debug.WriteLine("Buying back because I've been out of the market too long.  it's stable I suppose, or low.");
                 retState = SuggestedAction.Buy;
+                var triggerAsset = _assets.FirstOrDefault(a => a.TickerSymbol == TickerTriggeredOn);
+                LastReason = new EpisodeReason
+                {
+                    Code = "MaxDaysElapsed",
+                    Description = $"Out of the market {_configData.MaxDaysOutOfMarket} days since {TriggeredDate:d} with no price trigger — buying back regardless of price.",
+                    TriggerTickers = triggerAsset != null
+                        ? new() { new TickerSnapshot { Ticker = triggerAsset.TickerSymbol, Price = triggerAsset.GetLatestPrice(), Shares = triggerAsset.NumberOfShares } }
+                        : new()
+                };
             }
-            else 
+            else
             {
                 foreach (var asset in _assets)
                 {
@@ -86,11 +101,23 @@ namespace Reckoner.Services
                     {
                         Debug.WriteLine("Hit ahe lower price, may not be the bottom, but I just gained a nice delta.");
                         retState = SuggestedAction.Buy; // Current price is at or below the buyback trigger price.
+                        LastReason = new EpisodeReason
+                        {
+                            Code = "DippedFurther",
+                            Description = $"{asset.TickerSymbol} fell to {currentPrice:C2}, at or below the further-drop buy-back trigger of {TriggerBuyBackPrice:C2}.",
+                            TriggerTickers = new() { new TickerSnapshot { Ticker = asset.TickerSymbol, Price = currentPrice, Shares = asset.NumberOfShares } }
+                        };
                     }
                     if (currentPrice >= RecoveryBuyPrice)
                     {
                         Debug.WriteLine("It's going bak up, go ahead and buy!");
                         retState = SuggestedAction.Buy; // Current price is at or below the buyback trigger price.
+                        LastReason = new EpisodeReason
+                        {
+                            Code = "RecoveredUp",
+                            Description = $"{asset.TickerSymbol} recovered to {currentPrice:C2}, at or above the recovery buy-back trigger of {RecoveryBuyPrice:C2}.",
+                            TriggerTickers = new() { new TickerSnapshot { Ticker = asset.TickerSymbol, Price = currentPrice, Shares = asset.NumberOfShares } }
+                        };
                     }
                 }
             }
@@ -176,7 +203,13 @@ namespace Reckoner.Services
                 TriggerBuyBackPrice = _highWaterMark * (1 - _configData.TriggerToBuyBack); // Calculate the price at which we will buy back in after a selloff.
                 TickerTriggeredOn = asset.TickerSymbol;
                 RecoveryBuyPrice = _highWaterMark * (1 - _configData.TriggerToBuyRecovery); // Calculate the price at which we will buy back in after a selloff.
-                return SuggestedAction.Sell; 
+                LastReason = new EpisodeReason
+                {
+                    Code = "PriceThreshold",
+                    Description = $"{asset.TickerSymbol} fell {_configData.TriggerToSell:P0} from its high of {_highWaterMark:C2} to {currentPrice:C2}, crossing the sell-off trigger.",
+                    TriggerTickers = new() { new TickerSnapshot { Ticker = asset.TickerSymbol, Price = currentPrice, Shares = asset.NumberOfShares } }
+                };
+                return SuggestedAction.Sell;
             }
             else return SuggestedAction.Hold; // Current price is above the selloff trigger price, so we will hold.
         }
