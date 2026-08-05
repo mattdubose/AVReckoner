@@ -167,9 +167,6 @@ namespace Reckoner.ViewModels
         }
 
         [RelayCommand]
-        void GoBack() => _appShellService.Navigation.GoBack();
-
-        [RelayCommand]
         async Task UpdateAll()
         {
             if (!_sync.IsConfigured)

@@ -18,12 +18,6 @@ namespace Reckoner.ViewModels
         }
 
         [RelayCommand]
-        private async Task NavigateToSimulations()
-        {
-            await _appShellService.Navigation.NavigateToAsync<InvestmentPerformanceViewModel>();
-        }
-
-        [RelayCommand]
         private async Task NavigateToAdmin()
         {
             await _appShellService.Navigation.NavigateToAsync<MarketDataAdminViewModel>();
@@ -33,13 +27,6 @@ namespace Reckoner.ViewModels
         private async Task NavigateToAnalystView()
         {
             await _appShellService.Navigation.NavigateToAsync<AnalystViewModel>();
-        }
-
-        [RelayCommand]
-        private async Task NavigateToSettings()
-        {
-            throw new NotImplementedException();
-//            await _appShellService.NavigateToAsync(nameof(Settins);
         }
 
     }

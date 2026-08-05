@@ -37,20 +37,6 @@
                 <Button
                     Width="250"
                     Classes="primary"
-                    Command="{Binding NavigateToSimulationsCommand}"
-                    Content="📈 Simulations"
-                    FontSize="18" />
-
-                <Button
-                    Width="250"
-                    Classes="primary"
-                    Command="{Binding NavigateToSettingsCommand}"
-                    Content="⚙️ Settings"
-                    FontSize="18" />
-
-                <Button
-                    Width="250"
-                    Classes="primary"
                     Command="{Binding NavigateToAdminCommand}"
                     Content="🗄 Market Data"
                     FontSize="18" />

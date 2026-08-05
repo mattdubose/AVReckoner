@@ -76,7 +76,11 @@ namespace Reckoner.Services
       {
         return (decimal)stockData.Close;
       }
-      return (decimal)_historicalDataIf.GetLastError();
+      // No exact-date row for today (weekend, holiday, any gap) — fall back to the same
+      // most-recent-available-close lookback GetLatestPrice uses, instead of returning
+      // GetLastError()'s error code as if it were a real price (it used to be cast straight
+      // into the return value here, e.g. -3.0m for DateNotPresent).
+      return GetLatestPrice(securityID);
     }
 
     public decimal GetLatestPrice(string tickerSymbol)
@@ -90,7 +94,10 @@ namespace Reckoner.Services
       DailyEquityInfo? stockData = _historicalDataIf.GetLatestDaysInfo(today, 300);
       if (stockData == null || !stockData.Close.HasValue)
       {
-        return (decimal)_historicalDataIf.GetLastError();
+        // Genuinely no price within the lookback window — 0 is the "no valid price" sentinel
+        // every caller already checks for (asset.GetCurrentPrice() <= 0), unlike an arbitrary
+        // error-code value that happens to also be <= 0.
+        return 0m;
       }
       return (decimal)stockData.Close;
 

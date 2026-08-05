@@ -15,6 +15,16 @@ using System.ComponentModel.Design.Serialization;
 
 namespace Reckoner.ViewModels
 {
+    // One row per scenario tab, below the chart — what's actually configured differently
+    // between scenarios, laid out so matching values line up and differences pop out.
+    public class ScenarioSummaryRow
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Strategy { get; set; } = string.Empty;
+        public string Holdings { get; set; } = string.Empty;
+        public string Contribution { get; set; } = string.Empty;
+        public string DateRange { get; set; } = string.Empty;
+    }
 
     public partial class InvestmentPerformanceViewModel : BaseViewModel
     {
@@ -89,8 +99,6 @@ namespace Reckoner.ViewModels
             });
             _numLinesUsed = 0;
             _simDayResults.Clear();
-            _episodesByRun.Clear();
-            Events.Clear();
             SimulationHasResults = false;
             TogglePlayPauseCommand.NotifyCanExecuteChanged();
             ExportToExcelCommand.NotifyCanExecuteChanged();
@@ -307,6 +315,7 @@ namespace Reckoner.ViewModels
                 }
             };
             simSettingsVM.SetSelections();
+            RebuildScenarioSummaries();
             ManagedDateTime managedTimeProvider = new ManagedDateTime();
             DateTimeService.GetInstance.SetDateProvider(managedTimeProvider);
 
@@ -436,10 +445,6 @@ namespace Reckoner.ViewModels
                 var finalPoints = new List<DateTimePoint>(allPoints);
                 await _dispatcher.ExecuteOnMainThreadAsync(() => series.Values = finalPoints);
                 _simDayResults[_numLinesUsed] = dayResults;
-                var episodes = new List<StrategyEpisode>(_accountService.CompletedEpisodes);
-                if (_accountService.CurrentEpisode != null)
-                    episodes.Add(_accountService.CurrentEpisode);
-                _episodesByRun[_numLinesUsed] = episodes;
             });
 
             _quitSimulation = false;
@@ -460,49 +465,7 @@ namespace Reckoner.ViewModels
             {
                 TogglePlayPauseCommand.NotifyCanExecuteChanged();
                 ExportToExcelCommand.NotifyCanExecuteChanged();
-                if (!wasCancelled) RebuildEvents();
             });
-        }
-
-        // Real sell-off/buy-back episodes, per run so far — see AccountService.CompletedEpisodes.
-        // Captured live when each run finishes (episodes live on _accountService, which gets
-        // reset — see SimulationSettingsViewModel.SetSelections — before the next run starts).
-        private readonly Dictionary<int, List<StrategyEpisode>> _episodesByRun = new();
-
-        [ObservableProperty] private ObservableCollection<EpisodeRow> events = new();
-        [ObservableProperty] private EpisodeRow? selectedEvent;
-
-        partial void OnSelectedEventChanged(EpisodeRow? value)
-        {
-            if (value != null) ZoomToEvent(value);
-        }
-
-        [RelayCommand]
-        private void ZoomToEvent(EpisodeRow evt)
-        {
-            if (evt == null) return;
-            XAxes = new Axis[]
-            {
-                new DateTimeAxis(TimeSpan.FromDays(1), date => date.ToString("MMM d, yyyy"))
-                {
-                    MinStep = TimeSpan.FromDays(1).Ticks,
-                    LabelsRotation = -45,
-                    TextSize = 11,
-                    MinLimit = evt.StartDate.AddDays(-60).Ticks,
-                    MaxLimit = evt.StartDate.AddDays(60).Ticks,
-                }
-            };
-        }
-
-        // Opens the detail popup for a double-clicked event row — called from code-behind since
-        // DataGrid doesn't have a built-in double-click-to-command binding.
-        public async Task ShowEpisodeDetail(EpisodeRow row, Window owner)
-        {
-            var win = new Views.EpisodeDetailWindow
-            {
-                DataContext = new EpisodeDetailViewModel(row.Episode)
-            };
-            await win.ShowDialog(owner);
         }
 
         [RelayCommand]
@@ -520,22 +483,29 @@ namespace Reckoner.ViewModels
             };
         }
 
-        private void RebuildEvents()
+        // One row per scenario tab — lets you eyeball what's actually different between them
+        // (holdings, strategy, contribution) without having to click through each tab.
+        [ObservableProperty] private ObservableCollection<ScenarioSummaryRow> scenarioSummaries = new();
+
+        private void RebuildScenarioSummaries()
         {
-            var built = _episodesByRun
+            var built = _simSettings
                 .OrderBy(kv => kv.Key)
-                .SelectMany(kv =>
+                .Select(kv => new ScenarioSummaryRow
                 {
-                    string name = _simSettings.TryGetValue(kv.Key, out var s) ? s.Name : $"Run {kv.Key + 1}";
-                    return kv.Value.Select(ep => new EpisodeRow { ScenarioName = name, Episode = ep });
+                    Name = kv.Value.Name,
+                    Strategy = kv.Value.Strategy.ToString(),
+                    Holdings = string.Join(", ", kv.Value.Holdings
+                        .Select(h => $"{h.TickerSymbol}: {(h.ContributionPercentage ?? 0m) * 100m:0}%")),
+                    Contribution = $"{kv.Value.ContributionAmount:C0} / {kv.Value.ContributionInterval}",
+                    DateRange = $"{kv.Value.StartDateOffset:MM/dd/yyyy} – {kv.Value.EndDateOffset:MM/dd/yyyy}",
                 })
-                .OrderBy(e => e.StartDate)
                 .ToList();
 
-            Events = new ObservableCollection<EpisodeRow>(built);
+            ScenarioSummaries = new ObservableCollection<ScenarioSummaryRow>(built);
         }
 
-        
+
         private AccountService _accountService;
         readonly AppStateService _appState;
         public InvestmentPerformanceViewModel(AppShellService appShell, AppStateService appState):base(appShell)
@@ -670,6 +640,7 @@ namespace Reckoner.ViewModels
                 });
             }
             simSettingsVM.ActiveSimSettings = _simSettings[0];
+            RebuildScenarioSummaries();
         }
         [RelayCommand]
         private void SelectSimulation(SimulationSettings sim)

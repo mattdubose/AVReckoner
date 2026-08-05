@@ -30,17 +30,10 @@
 
                 <Button
                     Grid.Column="2"
-                    Margin="0,0,8,0"
                     Classes="primary"
                     Command="{Binding UpdateAllCommand}"
                     Content="Update All"
                     IsEnabled="{Binding !IsUpdating}" />
-
-                <Button
-                    Grid.Column="3"
-                    Classes="primary"
-                    Command="{Binding GoBackCommand}"
-                    Content="← Back" />
             </Grid>
 
             <!--  Row 1: Update progress  -->

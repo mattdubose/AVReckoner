@@ -334,7 +334,7 @@
             </Border>
         </Grid>
 
-        <Grid Grid.Row="2" Margin="0,8,0,0" RowDefinitions="Auto,100">
+        <Grid Grid.Row="2" Margin="0,8,0,0" RowDefinitions="Auto,150">
             <StackPanel
                 Grid.Row="0"
                 Margin="0,0,0,4"
@@ -345,7 +345,7 @@
                     VerticalAlignment="Center"
                     Foreground="Gray"
                     FontStyle="Italic"
-                    Text="Click a row to jump the chart to that date; double-click for details." />
+                    Text="What's configured differently across scenario tabs." />
             </StackPanel>
             <Border
                 Grid.Row="1"
@@ -355,19 +355,17 @@
                 BorderThickness="1"
                 CornerRadius="8">
                 <DataGrid
-                    Name="EpisodesGrid"
                     AutoGenerateColumns="False"
+                    CanUserResizeColumns="True"
                     CanUserSortColumns="True"
-                    DoubleTapped="EpisodesGrid_DoubleTapped"
                     IsReadOnly="True"
-                    ItemsSource="{Binding Events}"
-                    SelectedItem="{Binding SelectedEvent}">
+                    ItemsSource="{Binding ScenarioSummaries}">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Width="130" Binding="{Binding ScenarioName}" Header="Scenario" />
-                        <DataGridTextColumn Width="100" Binding="{Binding StartDate, StringFormat={}{0:MM/dd/yyyy}}" Header="Sold Off" />
-                        <DataGridTextColumn Width="100" Binding="{Binding EndDate, StringFormat={}{0:MM/dd/yyyy}}" Header="Bought Back" />
-                        <DataGridTextColumn Width="120" Binding="{Binding EntryReasonCode}" Header="Entry Reason" />
-                        <DataGridTextColumn Width="*" Binding="{Binding ExitReasonCode}" Header="Exit Reason" />
+                        <DataGridTextColumn Width="130" Binding="{Binding Name}" Header="Scenario" />
+                        <DataGridTextColumn Width="110" Binding="{Binding Strategy}" Header="Strategy" />
+                        <DataGridTextColumn Width="*" Binding="{Binding Holdings}" Header="Holdings" />
+                        <DataGridTextColumn Width="150" Binding="{Binding Contribution}" Header="Contribution" />
+                        <DataGridTextColumn Width="200" Binding="{Binding DateRange}" Header="Date Range" />
                     </DataGrid.Columns>
                 </DataGrid>
             </Border>

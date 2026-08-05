@@ -262,6 +262,7 @@
                     <DataGrid
                         Name="ResultsGrid"
                         AutoGenerateColumns="False"
+                        CanUserResizeColumns="True"
                         CanUserSortColumns="True"
                         IsReadOnly="True"
                         ItemsSource="{Binding Results}"
@@ -318,6 +319,7 @@
                     <DataGrid
                         Name="EpisodesGrid"
                         AutoGenerateColumns="False"
+                        CanUserResizeColumns="True"
                         CanUserSortColumns="True"
                         DoubleTapped="EpisodesGrid_DoubleTapped"
                         IsReadOnly="True"

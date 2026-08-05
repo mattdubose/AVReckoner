@@ -283,7 +283,12 @@ namespace Reckoner.Services
                     _episodeAwaitingFinalization = CurrentEpisode;
                     CurrentEpisode = null;
                 }
-                if (_account.CashBalance > 0)
+                // Only move cash into a pending trade once today's prices are actually good
+                // enough to execute it (see HandleStackedActivities/CanPerformTradeActionToday)
+                // — zeroing CashBalance first, unconditionally, could strand the money in
+                // StackedActivities: invisible to both CashBalance and GetBalance() until
+                // whatever day next has valid prices for every held asset.
+                if (_account.CashBalance > 0 && CanPerformTradeActionToday())
                 {
                     _account.StackedActivities.Add(new ActivityHolder(Models.Action.Contribution, _account.CashBalance,  DateTimeService.GetInstance.GetCurrentDate()));
                     _account.CashBalance = 0;
