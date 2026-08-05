@@ -178,6 +178,7 @@
             <lvc:CartesianChart
                 Series="{Binding ListOfLines}"
                 XAxes="{Binding XAxes}"
+                YAxes="{Binding YAxes}"
                 ZoomMode="X" />
         </Border>
 

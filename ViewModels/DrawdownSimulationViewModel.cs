@@ -131,6 +131,18 @@ namespace Reckoner.ViewModels
             }
         };
 
+        // Without an explicit Labeler, LiveCharts prints the raw double on both the axis and the
+        // hover tooltip — force it to money with 2 decimal places everywhere it shows a value.
+        [ObservableProperty]
+        private Axis[] yAxes = new Axis[]
+        {
+            new Axis
+            {
+                Labeler = value => value.ToString("C2"),
+                TextSize = 11,
+            }
+        };
+
         public DrawdownSimulationViewModel(AppShellService appShell, AppStateService appState) : base(appShell)
         {
             _appState = appState;

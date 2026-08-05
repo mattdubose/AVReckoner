@@ -2,6 +2,7 @@
 using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore;
@@ -15,8 +16,9 @@ using System.ComponentModel.Design.Serialization;
 
 namespace Reckoner.ViewModels
 {
-    // One row per scenario tab, below the chart — what's actually configured differently
-    // between scenarios, laid out so matching values line up and differences pop out.
+    // One legend chip per scenario that's actually been run — the color matches its line on
+    // the chart; hovering shows the full configuration instead of spending permanent screen
+    // space on a table.
     public class ScenarioSummaryRow
     {
         public string Name { get; set; } = string.Empty;
@@ -24,6 +26,9 @@ namespace Reckoner.ViewModels
         public string Holdings { get; set; } = string.Empty;
         public string Contribution { get; set; } = string.Empty;
         public string DateRange { get; set; } = string.Empty;
+        public IBrush Color { get; set; } = Brushes.Black;
+        public string ConfigTooltip =>
+            $"Strategy: {Strategy}\nHoldings: {Holdings}\nContribution: {Contribution}\nDates: {DateRange}";
     }
 
     public partial class InvestmentPerformanceViewModel : BaseViewModel
@@ -99,6 +104,7 @@ namespace Reckoner.ViewModels
             });
             _numLinesUsed = 0;
             _simDayResults.Clear();
+            ScenarioSummaries.Clear();
             SimulationHasResults = false;
             TogglePlayPauseCommand.NotifyCanExecuteChanged();
             ExportToExcelCommand.NotifyCanExecuteChanged();
@@ -315,7 +321,6 @@ namespace Reckoner.ViewModels
                 }
             };
             simSettingsVM.SetSelections();
-            RebuildScenarioSummaries();
             ManagedDateTime managedTimeProvider = new ManagedDateTime();
             DateTimeService.GetInstance.SetDateProvider(managedTimeProvider);
 
@@ -455,16 +460,22 @@ namespace Reckoner.ViewModels
             {
                 _numLinesUsed++;
                 Debug.WriteLine($"Done Testing dates - points rendered: {numRendered}");
-                SimulationHasResults = true;
             }
 
             // NotifyCanExecuteChanged raises CanExecuteChanged synchronously on whatever thread calls it.
             // This whole method runs on a background thread (see TogglePlayPause's Task.Run), so without
             // marshalling back to the UI thread, Avalonia's Button never picks up the new CanExecute state.
+            // SimulationHasResults/RebuildScenarioSummaries mutate bound properties/collections and need
+            // the same marshalling — Avalonia's controls aren't safe to touch off the UI thread.
             await _dispatcher.ExecuteOnMainThreadAsync(() =>
             {
                 TogglePlayPauseCommand.NotifyCanExecuteChanged();
                 ExportToExcelCommand.NotifyCanExecuteChanged();
+                if (!wasCancelled)
+                {
+                    SimulationHasResults = true;
+                    RebuildScenarioSummaries();
+                }
             });
         }
 
@@ -483,22 +494,33 @@ namespace Reckoner.ViewModels
             };
         }
 
-        // One row per scenario tab — lets you eyeball what's actually different between them
-        // (holdings, strategy, contribution) without having to click through each tab.
+        // One row per scenario that's actually been run — not every configured tab, only the
+        // ones _simDayResults has results for, so this reads as a record of what ran rather than
+        // every tab's current (possibly never-run) configuration.
         [ObservableProperty] private ObservableCollection<ScenarioSummaryRow> scenarioSummaries = new();
+
+        // Matches the colors ListOfLines uses in CreateLinesAndSettings, so a legend chip's
+        // swatch is the same color as that scenario's line on the chart.
+        private static readonly IBrush[] _summaryPalette =
+        {
+            Brushes.Black, Brushes.Green, Brushes.Blue, Brushes.Magenta, Brushes.Red,
+        };
 
         private void RebuildScenarioSummaries()
         {
-            var built = _simSettings
-                .OrderBy(kv => kv.Key)
-                .Select(kv => new ScenarioSummaryRow
+            var built = _simDayResults.Keys
+                .OrderBy(k => k)
+                .Where(k => _simSettings.ContainsKey(k))
+                .Select(k => (k, s: _simSettings[k]))
+                .Select(x => new ScenarioSummaryRow
                 {
-                    Name = kv.Value.Name,
-                    Strategy = kv.Value.Strategy.ToString(),
-                    Holdings = string.Join(", ", kv.Value.Holdings
+                    Name = x.s.Name,
+                    Strategy = x.s.Strategy.ToString(),
+                    Holdings = string.Join(", ", x.s.Holdings
                         .Select(h => $"{h.TickerSymbol}: {(h.ContributionPercentage ?? 0m) * 100m:0}%")),
-                    Contribution = $"{kv.Value.ContributionAmount:C0} / {kv.Value.ContributionInterval}",
-                    DateRange = $"{kv.Value.StartDateOffset:MM/dd/yyyy} – {kv.Value.EndDateOffset:MM/dd/yyyy}",
+                    Contribution = $"{x.s.ContributionAmount:C0} / {x.s.ContributionInterval}",
+                    DateRange = $"{x.s.StartDateOffset:MM/dd/yyyy} – {x.s.EndDateOffset:MM/dd/yyyy}",
+                    Color = _summaryPalette[x.k % _summaryPalette.Length],
                 })
                 .ToList();
 
@@ -640,7 +662,6 @@ namespace Reckoner.ViewModels
                 });
             }
             simSettingsVM.ActiveSimSettings = _simSettings[0];
-            RebuildScenarioSummaries();
         }
         [RelayCommand]
         private void SelectSimulation(SimulationSettings sim)
@@ -656,6 +677,19 @@ namespace Reckoner.ViewModels
             {
                 MinStep = TimeSpan.FromDays(28).Ticks,
                 LabelsPaint = null,
+            }
+        };
+
+        // Without an explicit Labeler, LiveCharts prints the raw double (decimal->double
+        // conversion noise included) on both the axis and the hover tooltip — force it to
+        // money with 2 decimal places everywhere it shows a value.
+        [ObservableProperty]
+        private Axis[] yAxes = new Axis[]
+        {
+            new Axis
+            {
+                Labeler = value => value.ToString("C2"),
+                TextSize = 11,
             }
         };
 

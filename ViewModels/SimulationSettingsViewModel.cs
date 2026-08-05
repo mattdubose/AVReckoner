@@ -32,7 +32,7 @@ namespace Reckoner.ViewModels
         [ObservableProperty] private DayOfWeek selectedDayOfWeek = DayOfWeek.Friday;
         [ObservableProperty] private string contributionDates = "1";
         [ObservableProperty] private string dateHelperText;
-        [ObservableProperty] private ActionInterval contributionInterval;
+        [ObservableProperty] private ActionInterval contributionInterval = ActionInterval.Monthly;
         [ObservableProperty] private ActionInterval rebalanceInterval = ActionInterval.Yearly;
         [ObservableProperty] private bool dividendReinvestment = true;
         [ObservableProperty] decimal initialCash = 0;
