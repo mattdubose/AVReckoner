@@ -1,0 +1,101 @@
+<Window
+    x:Class="Reckoner.Views.EpisodeDetailWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:model="clr-namespace:Reckoner.Models"
+    xmlns:vm="clr-namespace:Reckoner.ViewModels"
+    Title="Episode Detail"
+    Width="640"
+    SizeToContent="Height"
+    x:DataType="vm:EpisodeDetailViewModel"
+    WindowStartupLocation="CenterOwner"
+    mc:Ignorable="d">
+
+    <Border
+        Padding="20"
+        Background="White"
+        BorderBrush="#DDD"
+        BorderThickness="1"
+        CornerRadius="12">
+        <StackPanel Spacing="10">
+
+            <TextBlock
+                HorizontalAlignment="Center"
+                FontWeight="Bold"
+                FontSize="16"
+                Text="{Binding DateRange}" />
+
+            <TextBlock FontWeight="Bold" Text="Why it sold off" />
+            <TextBlock Text="{Binding EntryReasonText}" TextWrapping="Wrap" />
+            <DataGrid
+                MaxHeight="90"
+                AutoGenerateColumns="False"
+                CanUserResizeColumns="True"
+                IsReadOnly="True"
+                ItemsSource="{Binding EntryTriggerTickers}">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Width="120" Binding="{Binding Ticker}" Header="Ticker" />
+                    <DataGridTextColumn Width="100" Binding="{Binding Price, StringFormat={}{0:C}}" Header="Price" />
+                    <DataGridTextColumn Width="100" Binding="{Binding Shares}" Header="Shares" />
+                </DataGrid.Columns>
+            </DataGrid>
+
+            <TextBlock FontWeight="Bold" Text="Why it bought back" />
+            <TextBlock Text="{Binding ExitReasonText}" TextWrapping="Wrap" />
+            <DataGrid
+                MaxHeight="90"
+                AutoGenerateColumns="False"
+                CanUserResizeColumns="True"
+                IsReadOnly="True"
+                ItemsSource="{Binding ExitTriggerTickers}">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Width="120" Binding="{Binding Ticker}" Header="Ticker" />
+                    <DataGridTextColumn Width="100" Binding="{Binding Price, StringFormat={}{0:C}}" Header="Price" />
+                    <DataGridTextColumn Width="100" Binding="{Binding Shares}" Header="Shares" />
+                </DataGrid.Columns>
+            </DataGrid>
+
+            <Grid ColumnDefinitions="*,*">
+                <StackPanel Grid.Column="0" Margin="0,0,8,0" Spacing="4">
+                    <TextBlock FontWeight="Bold" Text="Holdings at Start" />
+                    <DataGrid
+                        MaxHeight="160"
+                        AutoGenerateColumns="False"
+                        CanUserResizeColumns="True"
+                        IsReadOnly="True"
+                        ItemsSource="{Binding HoldingsAtStart}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Width="80" Binding="{Binding Ticker}" Header="Ticker" />
+                            <DataGridTextColumn Width="80" Binding="{Binding Price, StringFormat={}{0:C}}" Header="Price" />
+                            <DataGridTextColumn Width="80" Binding="{Binding Shares}" Header="Shares" />
+                            <DataGridTextColumn Width="90" Binding="{Binding Value, StringFormat={}{0:C}}" Header="Value" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Margin="8,0,0,0" Spacing="4">
+                    <TextBlock FontWeight="Bold" Text="Holdings at End" />
+                    <DataGrid
+                        MaxHeight="160"
+                        AutoGenerateColumns="False"
+                        CanUserResizeColumns="True"
+                        IsReadOnly="True"
+                        ItemsSource="{Binding HoldingsAtEnd}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Width="80" Binding="{Binding Ticker}" Header="Ticker" />
+                            <DataGridTextColumn Width="80" Binding="{Binding Price, StringFormat={}{0:C}}" Header="Price" />
+                            <DataGridTextColumn Width="80" Binding="{Binding Shares}" Header="Shares" />
+                            <DataGridTextColumn Width="90" Binding="{Binding Value, StringFormat={}{0:C}}" Header="Value" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </StackPanel>
+            </Grid>
+
+            <Button
+                HorizontalAlignment="Center"
+                Click="OnCloseClick"
+                Content="Close" />
+
+        </StackPanel>
+    </Border>
+</Window>

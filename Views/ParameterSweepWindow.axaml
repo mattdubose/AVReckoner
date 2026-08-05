@@ -1,0 +1,183 @@
+<Window
+    x:Class="Reckoner.Views.ParameterSweepWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:Reckoner.Controls"
+    xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.Avalonia;assembly=LiveChartsCore.SkiaSharpView.Avalonia"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:model="clr-namespace:Reckoner.Models"
+    xmlns:vm="clr-namespace:Reckoner.ViewModels"
+    Title="Parameter Sweep"
+    Width="1000"
+    Height="800"
+    x:DataType="vm:ParameterSweepViewModel"
+    WindowStartupLocation="CenterOwner"
+    mc:Ignorable="d">
+
+    <Grid Margin="20" RowDefinitions="Auto,Auto,Auto,Auto,2*,Auto,Auto,150">
+
+        <TextBlock
+            Grid.Row="0"
+            Margin="0,0,0,10"
+            FontSize="20"
+            FontWeight="Bold"
+            Text="🎛 Parameter Sweep" />
+
+        <StackPanel
+            Grid.Row="1"
+            Margin="0,0,0,10"
+            Orientation="Horizontal"
+            Spacing="8">
+            <Label VerticalAlignment="Center" Content="Template Scenario:" />
+            <ComboBox ItemsSource="{Binding Templates}" SelectedItem="{Binding SelectedTemplate, Mode=TwoWay}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate DataType="vm:AnalystScenarioSlot">
+                        <TextBlock Text="{Binding SimSettingsVM.ActiveSimSettings.Name}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+            <TextBlock
+                VerticalAlignment="Center"
+                Foreground="Gray"
+                FontStyle="Italic"
+                Text="Holdings, dates, and contribution come from this scenario — only the checked knobs below vary." />
+        </StackPanel>
+
+        <Border
+            Grid.Row="2"
+            Margin="0,0,0,10"
+            Padding="10"
+            Background="White"
+            BorderBrush="Gray"
+            BorderThickness="1"
+            CornerRadius="8">
+            <ItemsControl ItemsSource="{Binding Knobs}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="model:SweepKnob">
+                        <StackPanel Margin="0,4" Orientation="Horizontal" Spacing="10">
+                            <CheckBox VerticalAlignment="Center" IsChecked="{Binding IsEnabled}" />
+                            <TextBlock Width="220" VerticalAlignment="Center" Text="{Binding Label}" />
+                            <Label VerticalAlignment="Center" Content="Min" />
+                            <controls:DecimalInput FormatString="0.0" Value="{Binding Min}" />
+                            <Label VerticalAlignment="Center" Content="Max" />
+                            <controls:DecimalInput FormatString="0.0" Value="{Binding Max}" />
+                            <Label VerticalAlignment="Center" Content="Step" />
+                            <controls:DecimalInput FormatString="0.0" Value="{Binding Step}" />
+                            <TextBlock VerticalAlignment="Center" Text="{Binding Unit}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Border>
+
+        <StackPanel
+            Grid.Row="3"
+            Margin="0,0,0,10"
+            Orientation="Horizontal"
+            Spacing="10">
+            <Button
+                Classes="primary"
+                Command="{Binding RunSweepCommand}"
+                Content="▶ Run Sweep" />
+            <TextBlock
+                VerticalAlignment="Center"
+                FontStyle="Italic"
+                IsVisible="{Binding IsRunning}"
+                Text="Running sweep…" />
+            <Border
+                Padding="8,4"
+                Background="#FFF2F0"
+                BorderBrush="#D9534F"
+                BorderThickness="1"
+                CornerRadius="6"
+                IsVisible="{Binding HasRunError}">
+                <TextBlock Foreground="#D9534F" Text="{Binding RunError}" TextWrapping="Wrap" />
+            </Border>
+        </StackPanel>
+
+        <Grid Grid.Row="4" ColumnDefinitions="320,*">
+            <Border
+                Grid.Column="0"
+                Margin="0,0,10,0"
+                Padding="5"
+                Background="White"
+                BorderBrush="Gray"
+                BorderThickness="1"
+                CornerRadius="8">
+                <DataGrid
+                    Name="ResultsGrid"
+                    AutoGenerateColumns="False"
+                    CanUserResizeColumns="True"
+                    CanUserSortColumns="True"
+                    IsReadOnly="True"
+                    ItemsSource="{Binding Results}"
+                    SelectionChanged="ResultsGrid_SelectionChanged"
+                    SelectionMode="Extended">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Width="*" Binding="{Binding Name}" Header="Scenario" />
+                        <DataGridTextColumn Width="110" Binding="{Binding EndBalance, StringFormat={}{0:C}}" Header="End Balance" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Border>
+
+            <Border
+                Grid.Column="1"
+                Padding="5"
+                Background="White"
+                BorderBrush="Gray"
+                BorderThickness="1"
+                CornerRadius="8">
+                <lvc:CartesianChart
+                    Series="{Binding DetailSeries}"
+                    Sections="{Binding DetailSections}"
+                    XAxes="{Binding DetailXAxes}"
+                    YAxes="{Binding DetailYAxes}"
+                    ZoomMode="X" />
+            </Border>
+        </Grid>
+
+        <StackPanel
+            Grid.Row="5"
+            Margin="0,8,0,4"
+            Orientation="Horizontal"
+            Spacing="8">
+            <Button Command="{Binding ResetZoomCommand}" Content="Reset Zoom" />
+            <TextBlock
+                VerticalAlignment="Center"
+                Foreground="Gray"
+                FontStyle="Italic"
+                Text="Select rows on the left to compare. Double-click an episode below for details." />
+        </StackPanel>
+        <TextBlock
+            Grid.Row="6"
+            Margin="0,0,0,4"
+            FontWeight="Bold"
+            Text="Sell-off Episodes" />
+
+        <Border
+            Grid.Row="7"
+            Padding="5"
+            Background="White"
+            BorderBrush="Gray"
+            BorderThickness="1"
+            CornerRadius="8">
+            <DataGrid
+                Name="EpisodesGrid"
+                AutoGenerateColumns="False"
+                CanUserResizeColumns="True"
+                CanUserSortColumns="True"
+                DoubleTapped="EpisodesGrid_DoubleTapped"
+                IsReadOnly="True"
+                ItemsSource="{Binding Events}"
+                SelectedItem="{Binding SelectedEvent}">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Width="200" Binding="{Binding ScenarioName}" Header="Scenario" />
+                    <DataGridTextColumn Width="100" Binding="{Binding StartDate, StringFormat={}{0:MM/dd/yyyy}}" Header="Sold Off" />
+                    <DataGridTextColumn Width="100" Binding="{Binding EndDate, StringFormat={}{0:MM/dd/yyyy}}" Header="Bought Back" />
+                    <DataGridTextColumn Width="120" Binding="{Binding EntryReasonCode}" Header="Entry Reason" />
+                    <DataGridTextColumn Width="*" Binding="{Binding ExitReasonCode}" Header="Exit Reason" />
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+    </Grid>
+</Window>
