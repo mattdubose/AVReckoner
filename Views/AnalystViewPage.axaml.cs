@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using System.Linq;
 using Reckoner.ViewModels;
 
@@ -24,5 +25,13 @@ public partial class AnalystViewPage : UserControl
         if (grid.SelectedItem is not EpisodeRow row) return;
         if (TopLevel.GetTopLevel(this) is not Window owner) return;
         await vm.ShowEpisodeDetail(row, owner);
+    }
+
+    private async void SweepFromScenario_Click(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button btn || btn.DataContext is not AnalystScenarioSlot slot) return;
+        if (DataContext is not AnalystViewModel vm) return;
+        if (TopLevel.GetTopLevel(this) is not Window owner) return;
+        await vm.OpenParameterSweepFor(slot, owner);
     }
 }

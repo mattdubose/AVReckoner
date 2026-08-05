@@ -97,6 +97,7 @@ namespace Reckoner.Services
 //                    if (asset.TickerSymbol != _configData.TickerToEvaluate) continue;
 
                     var currentPrice = asset.GetLatestPrice();
+                    if (currentPrice <= 0) continue; // no valid price today — can't evaluate this asset
                     if (currentPrice <= TriggerBuyBackPrice)
                     {
                         Debug.WriteLine("Hit ahe lower price, may not be the bottom, but I just gained a nice delta.");
@@ -165,6 +166,10 @@ namespace Reckoner.Services
             foreach (var asset in _assets)
             {
                 decimal curPrice = asset.GetLatestPrice();
+                // No valid price yet for this ticker (e.g. day one of the sim, before its price
+                // history actually starts) — GetLatestPrice() returns 0 for "no data," and seeding
+                // a $0 "high" would make every trigger comparison below it trivially true.
+                if (curPrice <= 0) continue;
                 if (highsForEvaluation.ContainsKey(asset.TickerSymbol))
                 {
                     if (curPrice > highsForEvaluation[asset.TickerSymbol])
@@ -192,8 +197,13 @@ namespace Reckoner.Services
                 // If we are already in a selloff state, we will not evaluate for selloff again.
                 return SuggestedAction.Hold; // We are already in a selloff state, so we will not evaluate for selloff again.
             }
-            decimal priceForSelloff = highsForEvaluation[asset.TickerSymbol] * (1 - _configData.TriggerToSell); // Calculate the price at which we will trigger a selloff.
+            // No valid high recorded yet for this ticker (e.g. still on the first day or two of
+            // the sim, before its price history starts) — nothing to evaluate against.
+            if (!highsForEvaluation.TryGetValue(asset.TickerSymbol, out var recordedHigh) || recordedHigh <= 0)
+                return SuggestedAction.Hold;
             var currentPrice = asset.GetLatestPrice();
+            if (currentPrice <= 0) return SuggestedAction.Hold; // no valid price today either
+            decimal priceForSelloff = recordedHigh * (1 - _configData.TriggerToSell); // Calculate the price at which we will trigger a selloff.
             if (currentPrice <= priceForSelloff)
             {
                 decimal _highWaterMark = highsForEvaluation[asset.TickerSymbol];

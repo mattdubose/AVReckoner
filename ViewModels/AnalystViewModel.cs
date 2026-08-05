@@ -176,6 +176,29 @@ namespace Reckoner.ViewModels
             return new AnalystScenarioSlot(accountService, simSettingsVM);
         }
 
+        // Opens the sweep popup — its own separate mode/window so generated scenarios never mix
+        // into this screen's Scenarios/Results. It clones settings via the same CreateScenarioSlot
+        // this page already uses, so a swept run is built exactly like a hand-added one.
+        [RelayCommand]
+        private async Task OpenParameterSweep(Window owner) => await OpenParameterSweepFor(null, owner);
+
+        // Called from a scenario card's own "🎛" button (code-behind, same pattern as the
+        // Episodes grid's double-tap) — skips the popup's template dropdown entirely by
+        // preselecting the exact card the analyst just finished configuring.
+        public async Task OpenParameterSweepFor(AnalystScenarioSlot? preselected, Window owner)
+        {
+            if (Scenarios.Count == 0)
+            {
+                RunError = "Add at least one scenario first — the sweep clones its settings.";
+                HasRunError = true;
+                return;
+            }
+            var sweepVm = new ParameterSweepViewModel(_appShellService, Scenarios.ToList(), name => CreateScenarioSlot(name));
+            if (preselected != null) sweepVm.SelectedTemplate = preselected;
+            var win = new Views.ParameterSweepWindow { DataContext = sweepVm };
+            await win.ShowDialog(owner);
+        }
+
         private bool CanRunAll() => Scenarios.Count > 0 && !IsRunning;
 
         partial void OnIsRunningChanged(bool value)
@@ -275,12 +298,6 @@ namespace Reckoner.ViewModels
             IsRunning = false;
         }
 
-        private static readonly SKColor[] _detailPalette =
-        {
-            SKColors.Black, SKColors.Green, SKColors.Blue, SKColors.Magenta, SKColors.Red,
-            SKColors.DarkOrange, SKColors.Teal, SKColors.Purple,
-        };
-
         // Called from the results grid's SelectionChanged (code-behind) — one line per
         // selected scenario, so you can compare several at once instead of just the top pick.
         // Sell-off stretches (Action == Sell, i.e. holding cash out of the market) get a
@@ -298,36 +315,10 @@ namespace Reckoner.ViewModels
                 return;
             }
 
-            DetailSeries = selected.Select((row, i) => (ISeries)new LineSeries<DateTimePoint>
-            {
-                Values = row.Days.Select(d => new DateTimePoint(d.Date, (double)d.Balance)).ToList(),
-                Stroke = new SolidColorPaint(_detailPalette[i % _detailPalette.Length]) { StrokeThickness = 2 },
-                Fill = null,
-                GeometryFill = null,
-                GeometryStroke = null,
-                Name = row.Name,
-            }).ToArray();
-
-            // Zoomed out over a long backtest, a short sell-off can be only a few pixels wide —
-            // pad it out to a visible minimum width and use a stronger fill so it still reads as
-            // "eye popping" rather than disappearing at the current zoom level.
-            DetailSections = selected
-                .SelectMany(row => row.Episodes.Select(ep => (row, ep)))
-                .Select(x =>
-                {
-                    DateTime start = x.ep.StartDate;
-                    DateTime end = x.ep.EndDate ?? (x.row.Days.Count > 0 ? x.row.Days[^1].Date : start);
-                    var padded = end - start < TimeSpan.FromDays(10)
-                        ? (start.AddDays(-5), end.AddDays(5))
-                        : (start, end);
-                    return new RectangularSection
-                    {
-                        Xi = padded.Item1.Ticks,
-                        Xj = padded.Item2.Ticks,
-                        Fill = new SolidColorPaint(SKColors.Red.WithAlpha(110)),
-                    };
-                })
-                .ToArray();
+            DetailSeries = ComparisonChartHelper.BuildSeries(
+                selected.Select(row => (row.Name, row.Days)).ToList());
+            DetailSections = ComparisonChartHelper.BuildSections(
+                selected.Select(row => (row.Name, row.Days, row.Episodes)).ToList());
 
             Events = new ObservableCollection<EpisodeRow>(
                 selected

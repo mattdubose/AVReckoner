@@ -35,6 +35,10 @@
                 Command="{Binding ExportToExcelCommand}"
                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
                 Content="📊 Export to Excel" />
+            <Button
+                Command="{Binding OpenParameterSweepCommand}"
+                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
+                Content="🎛 Parameter Sweep" />
             <TextBlock
                 VerticalAlignment="Center"
                 FontStyle="Italic"
@@ -106,13 +110,19 @@
                                 BorderThickness="1"
                                 CornerRadius="8">
                                 <StackPanel Spacing="6">
-                                    <Grid ColumnDefinitions="*,Auto">
+                                    <Grid ColumnDefinitions="*,Auto,Auto">
                                         <TextBox
                                             Grid.Column="0"
                                             Text="{Binding SimSettingsVM.ActiveSimSettings.Name}"
                                             Watermark="Scenario name" />
                                         <Button
                                             Grid.Column="1"
+                                            Margin="6,0,0,0"
+                                            Click="SweepFromScenario_Click"
+                                            Content="🎛"
+                                            ToolTip.Tip="Parameter Sweep from this scenario" />
+                                        <Button
+                                            Grid.Column="2"
                                             Margin="6,0,0,0"
                                             Command="{Binding $parent[UserControl].DataContext.RemoveScenarioCommand}"
                                             CommandParameter="{Binding}"
