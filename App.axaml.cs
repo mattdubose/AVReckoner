@@ -89,7 +89,7 @@ namespace AvReckoner
                 var settingsPath = AppPaths.UserFile("fipy_settings.json");
                 var settings = MarketDataSyncSettings.Load(settingsPath);
                 if (string.IsNullOrWhiteSpace(settings.FiPyExePath))
-                    settings.FiPyExePath = AppPaths.InstalledFile("fipy.exe");
+                    settings.FiPyExePath = AppPaths.InstalledFile(OperatingSystem.IsWindows() ? "fipy.exe" : "fipy");
                 return new MarketDataSyncService(AppPaths.UserFile("ReckonerDB.db"), settings);
             });
 

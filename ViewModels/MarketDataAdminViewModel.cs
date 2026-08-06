@@ -1,4 +1,6 @@
 using AvReckoner;
+using Avalonia.Controls;
+using Avalonia.Platform.Storage;
 using System.Text.RegularExpressions;
 
 namespace Reckoner.ViewModels
@@ -17,6 +19,11 @@ namespace Reckoner.ViewModels
 
         // Suggested tickers (checkbox list)
         [ObservableProperty] ObservableCollection<SuggestedTickerItem> suggestedTickers = new();
+
+        // Imported tickers (checkbox list, from an Excel file the user picks)
+        [ObservableProperty] ObservableCollection<SuggestedTickerItem> importedTickers = new();
+        [ObservableProperty] string importStatus = string.Empty;
+        [ObservableProperty] bool hasImportStatus;
 
         // Update All
         [ObservableProperty] bool isUpdating;
@@ -87,6 +94,8 @@ namespace Reckoner.ViewModels
 
             foreach (var item in SuggestedTickers)
                 item.IsAlreadyLoaded = loadedTickers.Contains(item.Ticker);
+            foreach (var item in ImportedTickers)
+                item.IsAlreadyLoaded = loadedTickers.Contains(item.Ticker);
         }
 
         private void LoadSuggestedTickers()
@@ -115,17 +124,24 @@ namespace Reckoner.ViewModels
         }
 
         [RelayCommand]
-        async Task LoadSelectedSuggestedTickers()
+        Task LoadSelectedSuggestedTickers() => LoadSelectedTickers(SuggestedTickers, "suggested");
+
+        [RelayCommand]
+        Task LoadSelectedImportedTickers() => LoadSelectedTickers(ImportedTickers, "imported");
+
+        // Shared by the Suggested Tickers panel and the Import-from-Excel panel — both are just
+        // a checkbox list of candidate tickers to download sequentially via fipy.
+        private async Task LoadSelectedTickers(ObservableCollection<SuggestedTickerItem> source, string label)
         {
-            var selected = SuggestedTickers.Where(t => t.IsSelected && !t.IsAlreadyLoaded).ToList();
+            var selected = source.Where(t => t.IsSelected && !t.IsAlreadyLoaded).ToList();
             if (selected.Count == 0)
             {
-                AppendLog("No suggested tickers selected.");
+                AppendLog($"No {label} tickers selected.");
                 return;
             }
             if (!_sync.IsConfigured)
             {
-                AppendLog("fipy.exe not found. Build the fiPy project first.");
+                AppendLog("fipy not found. Build the fiPy project first.");
                 return;
             }
 
@@ -133,7 +149,7 @@ namespace Reckoner.ViewModels
             _updateTotalTickers = selected.Count;
             _updateCompletedTickers = 0;
             UpdateProgress = 0;
-            AppendLog($"Loading {selected.Count} suggested ticker(s) — {DateTime.Now:t}");
+            AppendLog($"Loading {selected.Count} {label} ticker(s) — {DateTime.Now:t}");
 
             var progress = new Progress<string>(line =>
             {
@@ -161,9 +177,64 @@ namespace Reckoner.ViewModels
             }
 
             LoadSecurities();
-            UpdateStatusText = "Done loading suggested tickers.";
-            AppendLog("✓ Done loading suggested tickers.");
+            UpdateStatusText = $"Done loading {label} tickers.";
+            AppendLog($"✓ Done loading {label} tickers.");
             IsUpdating = false;
+        }
+
+        [RelayCommand]
+        async Task ImportFromExcel(TopLevel root)
+        {
+            if (root is not Window owner) return;
+
+            var files = await owner.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            {
+                Title = "Import Tickers from Excel",
+                AllowMultiple = false,
+                FileTypeFilter = new[]
+                {
+                    new FilePickerFileType("Excel Workbook") { Patterns = new[] { "*.xlsx" } }
+                }
+            });
+            var file = files?.FirstOrDefault();
+            if (file == null) return;
+
+            ImportedTickers.Clear();
+            SetImportStatus(string.Empty);
+
+            List<string> tickers;
+            try
+            {
+                tickers = await Task.Run(() => ExcelImportService.ImportTickers(file.Path.LocalPath));
+            }
+            catch (Exception ex)
+            {
+                SetImportStatus($"Couldn't read that file: {ex.Message}");
+                return;
+            }
+
+            if (tickers.Count == 0)
+            {
+                SetImportStatus("No tickers found — expected one ticker per row in the first column.");
+                return;
+            }
+
+            var loadedTickers = _allSecurities
+                .Select(s => s.TickerSymbol)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var ticker in tickers)
+            {
+                ImportedTickers.Add(new SuggestedTickerItem
+                {
+                    Ticker = ticker,
+                    Name = ticker,
+                    IsAlreadyLoaded = loadedTickers.Contains(ticker),
+                    IsSelected = true
+                });
+            }
+
+            SetImportStatus($"Found {tickers.Count} ticker(s) in {file.Name}. Review below, then Load Selected.");
         }
 
         [RelayCommand]
@@ -360,6 +431,12 @@ namespace Reckoner.ViewModels
         {
             DownloadStatus = message;
             HasStatusMessage = !string.IsNullOrEmpty(message);
+        }
+
+        private void SetImportStatus(string message)
+        {
+            ImportStatus = message;
+            HasImportStatus = !string.IsNullOrEmpty(message);
         }
     }
 }

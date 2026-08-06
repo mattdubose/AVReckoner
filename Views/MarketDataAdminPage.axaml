@@ -8,7 +8,7 @@
     x:DataType="vm:MarketDataAdminViewModel">
 
     <Border Classes="page-card">
-        <Grid Margin="16" RowDefinitions="Auto,Auto,Auto,Auto,*">
+        <Grid Margin="16" RowDefinitions="Auto,Auto,Auto,Auto,Auto,*">
 
             <!--  Row 0: Header bar  -->
             <Grid Grid.Row="0" Margin="0,0,0,12" ColumnDefinitions="Auto,*,Auto,Auto">
@@ -142,9 +142,72 @@
                 </StackPanel>
             </Border>
 
-            <!--  Row 3: Suggested tickers  -->
+            <!--  Row 3: Import tickers from Excel  -->
             <Border
                 Grid.Row="3"
+                Margin="0,0,0,12"
+                Padding="12"
+                BorderBrush="#DDD"
+                BorderThickness="1"
+                CornerRadius="6">
+                <StackPanel Spacing="8">
+
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock
+                            Grid.Column="0"
+                            VerticalAlignment="Center"
+                            FontWeight="SemiBold"
+                            Text="Import from Excel" />
+                        <Button
+                            Grid.Column="1"
+                            Classes="primary"
+                            Command="{Binding ImportFromExcelCommand}"
+                            CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
+                            Content="Choose File…"
+                            IsEnabled="{Binding !IsUpdating}" />
+                    </Grid>
+
+                    <TextBlock
+                        FontSize="12"
+                        Opacity="0.65"
+                        Text="One ticker per row in the first column of the first sheet. A header row (e.g. &quot;Ticker&quot;) is fine." />
+
+                    <TextBlock
+                        FontSize="12"
+                        IsVisible="{Binding HasImportStatus}"
+                        Text="{Binding ImportStatus}" />
+
+                    <ItemsControl IsVisible="{Binding ImportedTickers.Count}" ItemsSource="{Binding ImportedTickers}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:SuggestedTickerItem">
+                                <CheckBox
+                                    Margin="0,0,16,4"
+                                    Content="{Binding Ticker}"
+                                    IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                    IsEnabled="{Binding !IsAlreadyLoaded}" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <Button
+                        HorizontalAlignment="Left"
+                        Classes="primary"
+                        Command="{Binding LoadSelectedImportedTickersCommand}"
+                        Content="Load Selected"
+                        IsEnabled="{Binding !IsUpdating}"
+                        IsVisible="{Binding ImportedTickers.Count}" />
+
+                </StackPanel>
+            </Border>
+
+            <!--  Row 4: Suggested tickers  -->
+            <Border
+                Grid.Row="4"
                 Margin="0,0,0,12"
                 Padding="12"
                 BorderBrush="#DDD"
@@ -187,8 +250,8 @@
                 </StackPanel>
             </Border>
 
-            <!--  Row 4: Securities table  -->
-            <Grid Grid.Row="4" RowDefinitions="Auto,*">
+            <!--  Row 5: Securities table  -->
+            <Grid Grid.Row="5" RowDefinitions="Auto,*">
 
                 <!--  Column headers  -->
                 <Border Grid.Row="0" Margin="8,0" Padding="8,6" Background="#EFEFEF">
