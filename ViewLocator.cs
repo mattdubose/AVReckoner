@@ -20,6 +20,9 @@ namespace AvReckoner
             { typeof(DrawdownSimulationViewModel), typeof(DrawdownSimulationPage) },
             { typeof(MarketDataAdminViewModel), typeof(MarketDataAdminPage) },
             { typeof(AnalystViewModel), typeof(AnalystViewPage) },
+            { typeof(ExperimentalViewModel), typeof(ExperimentalPage) },
+            { typeof(NetWorthViewModel), typeof(NetWorthPage) },
+            { typeof(RothVsTraditionalViewModel), typeof(RothVsTraditionalPage) },
         };
         public Control? Build(object? param)
         {

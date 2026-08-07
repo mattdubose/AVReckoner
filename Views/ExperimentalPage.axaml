@@ -1,0 +1,97 @@
+<UserControl
+    x:Class="Reckoner.Views.ExperimentalPage"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="clr-namespace:Reckoner.ViewModels"
+    x:DataType="vm:ExperimentalViewModel"
+    mc:Ignorable="d">
+
+    <Border Classes="page-card">
+        <StackPanel Margin="24" MaxWidth="700" HorizontalAlignment="Center" Spacing="8">
+
+            <TextBlock
+                FontSize="22"
+                FontWeight="Bold"
+                Text="🧪 Experimental" />
+            <TextBlock
+                Margin="0,0,0,16"
+                Foreground="Gray"
+                Text="Ideas in progress — a preview of what's next, not ready for real use yet."
+                TextWrapping="Wrap" />
+
+            <Border
+                Padding="14"
+                Background="White"
+                BorderBrush="#DDD"
+                BorderThickness="1"
+                CornerRadius="8">
+                <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Grid.Column="0" Spacing="4">
+                        <TextBlock FontWeight="SemiBold" Text="Drawdown Simulation" />
+                        <TextBlock
+                            Foreground="Gray"
+                            FontSize="12"
+                            Text="Model scheduled withdrawals against a portfolio over time — the simulation loop itself isn't wired up yet."
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+                    <Button
+                        Grid.Column="1"
+                        VerticalAlignment="Center"
+                        Classes="primary"
+                        Command="{Binding OpenDrawdownSimulationCommand}"
+                        Content="Preview" />
+                </Grid>
+            </Border>
+
+            <Border
+                Padding="14"
+                Background="White"
+                BorderBrush="#DDD"
+                BorderThickness="1"
+                CornerRadius="8">
+                <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Grid.Column="0" Spacing="4">
+                        <TextBlock FontWeight="SemiBold" Text="Balancing Your Accounts" />
+                        <TextBlock
+                            Foreground="Gray"
+                            FontSize="12"
+                            Text="Track household balances by tax treatment (cash, taxable, pre-tax, Roth) over time instead of re-typing a spreadsheet tab every period."
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+                    <Button
+                        Grid.Column="1"
+                        VerticalAlignment="Center"
+                        Classes="primary"
+                        Command="{Binding OpenNetWorthCommand}"
+                        Content="Preview" />
+                </Grid>
+            </Border>
+
+            <Border
+                Padding="14"
+                Background="White"
+                BorderBrush="#DDD"
+                BorderThickness="1"
+                CornerRadius="8">
+                <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Grid.Column="0" Spacing="4">
+                        <TextBlock FontWeight="SemiBold" Text="Roth vs. Traditional Comparison" />
+                        <TextBlock
+                            Foreground="Gray"
+                            FontSize="12"
+                            Text="Compare the same contribution to a Traditional vs. Roth account, after taxes. Conversion timing (convert now vs. later) isn't built yet."
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+                    <Button
+                        Grid.Column="1"
+                        VerticalAlignment="Center"
+                        Classes="primary"
+                        Command="{Binding OpenRothVsTraditionalCommand}"
+                        Content="Preview" />
+                </Grid>
+            </Border>
+
+        </StackPanel>
+    </Border>
+</UserControl>

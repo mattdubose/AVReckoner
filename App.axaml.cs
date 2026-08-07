@@ -78,6 +78,19 @@ namespace AvReckoner
               
             }//);
             
+            // Same writable-user-data-dir-with-seed-fallback pattern as Accounts.json
+            services.AddSingleton<INetWorthRepository>(sp =>
+            {
+                var netWorthPath = AppPaths.UserFile("NetWorth.json");
+                if (!File.Exists(netWorthPath))
+                {
+                    var seed = AppPaths.InstalledFile("Data/NetWorth.json");
+                    if (File.Exists(seed)) File.Copy(seed, netWorthPath);
+                    else File.WriteAllText(netWorthPath, "{}");
+                }
+                return new NetWorthJsonRepository(netWorthPath);
+            });
+
             services.AddSingleton<IMarketSecurityRepository>(sp =>
             {
                 var dbPath = AppPaths.UserFile("ReckonerDB.db");
@@ -115,6 +128,9 @@ namespace AvReckoner
             services.AddTransient<DrawdownSimulationViewModel>();
             services.AddTransient<MarketDataAdminViewModel>();
             services.AddTransient<AnalystViewModel>();
+            services.AddTransient<ExperimentalViewModel>();
+            services.AddTransient<NetWorthViewModel>();
+            services.AddTransient<RothVsTraditionalViewModel>();
 
             // 3. Build the IServiceProvider from the ServiceCollection.
             Services = services.BuildServiceProvider();

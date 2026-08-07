@@ -29,5 +29,11 @@ namespace Reckoner.ViewModels
             await _appShellService.Navigation.NavigateToAsync<AnalystViewModel>();
         }
 
+        [RelayCommand]
+        private async Task NavigateToExperimental()
+        {
+            await _appShellService.Navigation.NavigateToAsync<ExperimentalViewModel>();
+        }
+
     }
 }

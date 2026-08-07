@@ -1,0 +1,254 @@
+<UserControl
+    x:Class="Reckoner.Views.NetWorthPage"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:Reckoner.Controls"
+    xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.Avalonia;assembly=LiveChartsCore.SkiaSharpView.Avalonia"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="clr-namespace:Reckoner.ViewModels"
+    x:DataType="vm:NetWorthViewModel"
+    mc:Ignorable="d">
+
+    <Border Classes="page-card">
+        <ScrollViewer>
+            <StackPanel Margin="20" MaxWidth="900" HorizontalAlignment="Center" Spacing="12">
+
+                <TextBlock FontSize="22" FontWeight="Bold" Text="The Full Picture" />
+
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <Label VerticalAlignment="Center" Content="Snapshot Date:" />
+                    <DatePicker SelectedDate="{Binding SnapshotDate, Mode=TwoWay}" />
+                    <Button Classes="primary" Command="{Binding SaveSnapshotCommand}" Content="💾 Save Snapshot" />
+                </StackPanel>
+
+                <!--  Story: headline + narrative + breakdown  -->
+                <Border
+                    Padding="18"
+                    Background="White"
+                    BorderBrush="#DDD"
+                    BorderThickness="1"
+                    CornerRadius="8">
+                    <Grid ColumnDefinitions="*,220">
+                        <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="8">
+                            <TextBlock Foreground="Gray" FontSize="13" Text="Total Net Worth" />
+                            <TextBlock FontSize="34" FontWeight="Bold" Text="{Binding TotalNetWorth, StringFormat={}{0:C0}}" />
+                            <TextBlock Text="{Binding NarrativeSummary}" TextWrapping="Wrap" />
+                        </StackPanel>
+                        <lvc:PieChart
+                            Grid.Column="1"
+                            Height="200"
+                            Series="{Binding BreakdownSeries}" />
+                    </Grid>
+                </Border>
+
+                <!--  Summary  -->
+                <Border
+                    Padding="14"
+                    Background="White"
+                    BorderBrush="#DDD"
+                    BorderThickness="1"
+                    CornerRadius="8">
+                    <StackPanel Spacing="12">
+                        <Grid ColumnDefinitions="*,*,*,*">
+                            <StackPanel Grid.Column="0" Spacing="4">
+                                <TextBlock FontWeight="SemiBold" Text="Cash" />
+                                <TextBlock FontSize="22" Text="{Binding CashTotal, StringFormat={}{0:C}}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Spacing="4">
+                                <TextBlock FontWeight="SemiBold" Text="Taxable Invested" />
+                                <TextBlock FontSize="22" Text="{Binding TaxableTotal, StringFormat={}{0:C}}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2" Spacing="4">
+                                <TextBlock FontWeight="SemiBold" Text="Pre-Tax" />
+                                <TextBlock FontSize="22" Text="{Binding PreTaxTotal, StringFormat={}{0:C}}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="3" Spacing="4">
+                                <TextBlock FontWeight="SemiBold" Text="Tax-Free (Roth)" />
+                                <TextBlock FontSize="22" Text="{Binding TaxFreeTotal, StringFormat={}{0:C}}" />
+                            </StackPanel>
+                        </Grid>
+
+                        <Border BorderBrush="#EEE" BorderThickness="0,1,0,0" />
+
+                        <Grid ColumnDefinitions="*,*,*">
+                            <StackPanel Grid.Column="0" Spacing="4">
+                                <TextBlock Foreground="Gray" FontSize="12" Text="Other" />
+                                <TextBlock FontSize="18" Text="{Binding OtherTotal, StringFormat={}{0:C}}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Spacing="4">
+                                <TextBlock Foreground="Gray" FontSize="12" Text="Physical Assets − Debt" />
+                                <TextBlock FontSize="18" Text="{Binding PhysicalAssetsNetEquity, StringFormat={}{0:C}}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2" Spacing="4">
+                                <TextBlock Foreground="Gray" FontSize="12" Text="Grand Total (liquid assets)" />
+                                <TextBlock FontSize="22" FontWeight="Bold" Text="{Binding GrandTotalLiquid, StringFormat={}{0:C}}" />
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!--  Accounts, grouped  -->
+                <TextBlock Margin="0,8,0,0" FontWeight="Bold" Text="Accounts" />
+                <Border
+                    Padding="10"
+                    Background="White"
+                    BorderBrush="#DDD"
+                    BorderThickness="1"
+                    CornerRadius="8">
+                    <StackPanel Spacing="10">
+                        <ItemsControl ItemsSource="{Binding AccountGroups}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="vm:AccountGroupSummary">
+                                    <StackPanel Margin="0,0,0,20" Spacing="4">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBlock
+                                                Grid.Column="0"
+                                                FontSize="16"
+                                                FontWeight="SemiBold"
+                                                Text="{Binding GroupName}" />
+                                            <TextBlock
+                                                Grid.Column="1"
+                                                FontSize="16"
+                                                FontWeight="SemiBold"
+                                                Text="{Binding Subtotal, StringFormat={}{0:C}}" />
+                                        </Grid>
+                                        <ItemsControl ItemsSource="{Binding Rows}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate DataType="vm:NetWorthAccountRow">
+                                                    <Grid Margin="0,3" ColumnDefinitions="*,130,140,Auto">
+                                                        <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="{Binding Name}" />
+                                                        <TextBlock
+                                                            Grid.Column="1"
+                                                            VerticalAlignment="Center"
+                                                            Foreground="Gray"
+                                                            FontSize="12"
+                                                            Text="{Binding Category}" />
+                                                        <controls:DecimalInput
+                                                            Grid.Column="2"
+                                                            FormatString="0.00"
+                                                            Value="{Binding Balance}" />
+                                                        <Button
+                                                            Grid.Column="3"
+                                                            Margin="6,0,0,0"
+                                                            Command="{Binding $parent[UserControl].DataContext.RemoveAccountCommand}"
+                                                            CommandParameter="{Binding}"
+                                                            Content="✕" />
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <Grid ColumnDefinitions="*,160,Auto">
+                            <TextBox
+                                Grid.Column="0"
+                                Text="{Binding NewAccountName}"
+                                Watermark="New account name (e.g. Checking - Delta)" />
+                            <ComboBox
+                                Grid.Column="1"
+                                Margin="6,0,0,0"
+                                ItemsSource="{Binding Categories}"
+                                SelectedItem="{Binding NewAccountCategory}" />
+                            <Button
+                                Grid.Column="2"
+                                Margin="6,0,0,0"
+                                Classes="primary"
+                                Command="{Binding AddAccountCommand}"
+                                Content="+ Add" />
+                        </Grid>
+
+                        <Border BorderBrush="#EEE" BorderThickness="0,1,0,0" />
+
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Grid.Column="0" FontSize="18" FontWeight="Bold" Text="Grand Total (Accounts)" />
+                            <TextBlock Grid.Column="1" FontSize="18" FontWeight="Bold" Text="{Binding GrandTotalLiquid, StringFormat={}{0:C}}" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!--  Physical Assets & Debt  -->
+                <TextBlock Margin="0,8,0,0" FontWeight="Bold" Text="Physical Assets &amp; Debt" />
+                <Border
+                    Padding="10"
+                    Background="White"
+                    BorderBrush="#DDD"
+                    BorderThickness="1"
+                    CornerRadius="8">
+                    <StackPanel Spacing="4">
+                        <Grid Margin="0,0,0,4" ColumnDefinitions="*,120,120,90,Auto">
+                            <TextBlock Grid.Column="1" Foreground="Gray" FontSize="11" Text="Value" />
+                            <TextBlock Grid.Column="2" Foreground="Gray" FontSize="11" Text="Debt" />
+                            <TextBlock Grid.Column="3" Foreground="Gray" FontSize="11" Text="Rate %" />
+                        </Grid>
+                        <ItemsControl ItemsSource="{Binding PhysicalAssetRows}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="vm:PhysicalAssetRow">
+                                    <StackPanel Margin="0,3" Spacing="2">
+                                        <Grid ColumnDefinitions="*,120,120,90,Auto">
+                                            <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="{Binding Name}" />
+                                            <controls:DecimalInput Grid.Column="1" FormatString="0.00" Value="{Binding Value}" />
+                                            <controls:DecimalInput Grid.Column="2" Margin="6,0,0,0" FormatString="0.00" Value="{Binding Debt}" />
+                                            <controls:DecimalInput Grid.Column="3" Margin="6,0,0,0" FormatString="0.00" Value="{Binding InterestRatePercent}" />
+                                            <Button
+                                                Grid.Column="4"
+                                                Margin="6,0,0,0"
+                                                Command="{Binding $parent[UserControl].DataContext.RemovePhysicalAssetCommand}"
+                                                CommandParameter="{Binding}"
+                                                Content="✕" />
+                                        </Grid>
+                                        <TextBlock
+                                            Foreground="Gray"
+                                            FontSize="11"
+                                            Text="{Binding Equity, StringFormat={}Equity: {0:C}}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <Grid Margin="0,8,0,0" ColumnDefinitions="*,160,Auto">
+                            <TextBox
+                                Grid.Column="0"
+                                Text="{Binding NewPhysicalAssetName}"
+                                Watermark="New asset name (e.g. House)" />
+                            <Button
+                                Grid.Column="2"
+                                Margin="6,0,0,0"
+                                Classes="primary"
+                                Command="{Binding AddPhysicalAssetCommand}"
+                                Content="+ Add" />
+                        </Grid>
+
+                        <Border BorderBrush="#EEE" BorderThickness="0,1,0,0" />
+
+                        <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto">
+                            <TextBlock Grid.Column="0" FontSize="18" FontWeight="Bold" Text="Total" />
+                            <TextBlock Grid.Column="1" FontSize="18" FontWeight="Bold" Text="{Binding PhysicalAssetsTotal, StringFormat={}{0:C}}" />
+                            <TextBlock Grid.Column="2" Margin="10,0,0,0" FontSize="18" FontWeight="Bold" Text="- Debt" />
+                            <TextBlock Grid.Column="3" FontSize="18" FontWeight="Bold" Text="{Binding DebtTotal, StringFormat={}{0:C}}" />
+                            <TextBlock Grid.Column="4" Margin="10,0,0,0" FontSize="18" FontWeight="Bold" Text="{Binding PhysicalAssetsNetEquity, StringFormat={}Net: {0:C}}" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!--  History  -->
+                <TextBlock Margin="0,8,0,0" FontWeight="Bold" Text="History" />
+                <Border
+                    Height="260"
+                    Padding="5"
+                    Background="White"
+                    BorderBrush="#DDD"
+                    BorderThickness="1"
+                    CornerRadius="8">
+                    <lvc:CartesianChart
+                        Series="{Binding HistorySeries}"
+                        XAxes="{Binding HistoryXAxes}"
+                        YAxes="{Binding HistoryYAxes}" />
+                </Border>
+
+            </StackPanel>
+        </ScrollViewer>
+    </Border>
+</UserControl>

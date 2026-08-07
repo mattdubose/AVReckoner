@@ -1,0 +1,164 @@
+<UserControl
+    x:Class="Reckoner.Views.RothVsTraditionalPage"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:Reckoner.Controls"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="clr-namespace:Reckoner.ViewModels"
+    x:DataType="vm:RothVsTraditionalViewModel"
+    mc:Ignorable="d">
+
+    <Border Classes="page-card">
+        <ScrollViewer>
+            <StackPanel Margin="20" MaxWidth="700" HorizontalAlignment="Center" Spacing="12">
+
+                <TextBlock FontSize="22" FontWeight="Bold" Text="Roth vs. Traditional" />
+
+                <!--  Shared assumptions  -->
+                <TextBlock Margin="0,4,0,0" FontWeight="Bold" Text="Assumptions (shared by both sections below)" />
+                <Border
+                    Padding="14"
+                    Background="White"
+                    BorderBrush="#DDD"
+                    BorderThickness="1"
+                    CornerRadius="8">
+                    <StackPanel Spacing="10">
+                        <Grid ColumnDefinitions="*,*">
+                            <StackPanel Grid.Column="0" Spacing="4">
+                                <TextBlock Text="Current Age" />
+                                <controls:DecimalInput FormatString="0" Value="{Binding CurrentAge}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Margin="10,0,0,0" Spacing="4">
+                                <TextBlock Text="Withdrawal Age" />
+                                <controls:DecimalInput FormatString="0" Value="{Binding WithdrawalAge}" />
+                            </StackPanel>
+                        </Grid>
+                        <Grid ColumnDefinitions="*,*">
+                            <StackPanel Grid.Column="0" Spacing="4">
+                                <TextBlock Text="Current Marginal Tax Rate %" />
+                                <controls:DecimalInput FormatString="0.0" Value="{Binding CurrentTaxRatePercent}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Margin="10,0,0,0" Spacing="4">
+                                <TextBlock Text="Expected Future Marginal Tax Rate %" />
+                                <controls:DecimalInput FormatString="0.0" Value="{Binding FutureTaxRatePercent}" />
+                            </StackPanel>
+                        </Grid>
+                        <Grid ColumnDefinitions="*,*">
+                            <StackPanel Grid.Column="0" Spacing="4">
+                                <TextBlock Text="Assumed Annual Growth %" />
+                                <controls:DecimalInput FormatString="0.0" Value="{Binding GrowthRatePercent}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Margin="10,0,0,0" Spacing="4">
+                                <TextBlock Text="Capital Gains Tax Rate %" />
+                                <controls:DecimalInput FormatString="0.0" Value="{Binding CapitalGainsRatePercent}" />
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!--  Section 1: New Contribution  -->
+                <TextBlock Margin="0,12,0,0" FontSize="16" FontWeight="Bold" Text="New Contribution" />
+                <TextBlock
+                    Foreground="Gray"
+                    Text="Same dollar amount contributed to either — which leaves more after taxes?"
+                    TextWrapping="Wrap" />
+                <Border
+                    Padding="14"
+                    Background="White"
+                    BorderBrush="#DDD"
+                    BorderThickness="1"
+                    CornerRadius="8">
+                    <StackPanel Spacing="10">
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Contribution Amount" />
+                            <controls:DecimalInput FormatString="0.00" Value="{Binding ContributionAmount}" />
+                        </StackPanel>
+
+                        <CheckBox Content="Include Traditional's reinvested tax savings (taxable account)" IsChecked="{Binding IncludeReinvestedSavings}" />
+
+                        <Border BorderBrush="#EEE" BorderThickness="0,1,0,0" />
+
+                        <Grid ColumnDefinitions="*,*">
+                            <StackPanel Grid.Column="0" Spacing="2">
+                                <TextBlock FontWeight="SemiBold" Text="Traditional (after tax)" />
+                                <TextBlock FontSize="20" Text="{Binding TraditionalAfterTax, StringFormat={}{0:C}}" />
+                                <TextBlock
+                                    Foreground="Gray"
+                                    FontSize="12"
+                                    IsVisible="{Binding IncludeReinvestedSavings}"
+                                    Text="{Binding ReinvestedSavingsAfterTax, StringFormat={}Plus {0:C} reinvested savings}" />
+                                <TextBlock
+                                    FontWeight="Bold"
+                                    IsVisible="{Binding IncludeReinvestedSavings}"
+                                    Text="{Binding TraditionalTotal, StringFormat={}Total: {0:C}}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Spacing="2">
+                                <TextBlock FontWeight="SemiBold" Text="Roth (after tax)" />
+                                <TextBlock FontSize="20" Text="{Binding RothAfterTax, StringFormat={}{0:C}}" />
+                            </StackPanel>
+                        </Grid>
+
+                        <Border BorderBrush="#EEE" BorderThickness="0,1,0,0" />
+
+                        <TextBlock FontWeight="Bold" Text="{Binding Summary}" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+
+                <!--  Section 2: Existing Balance Conversion  -->
+                <TextBlock Margin="0,12,0,0" FontSize="16" FontWeight="Bold" Text="Existing Balance: Convert Now vs. Later" />
+                <TextBlock
+                    Foreground="Gray"
+                    Text="Pay the conversion tax today at today's rate, or leave it deferred and pay whatever rate applies at withdrawal."
+                    TextWrapping="Wrap" />
+                <Border
+                    Padding="14"
+                    Background="White"
+                    BorderBrush="#DDD"
+                    BorderThickness="1"
+                    CornerRadius="8">
+                    <StackPanel Spacing="10">
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Balance to Convert" />
+                            <controls:DecimalInput FormatString="0.00" Value="{Binding BalanceToConvert}" />
+                        </StackPanel>
+
+                        <CheckBox Content="Pay the conversion tax from outside cash (not from the converted balance)" IsChecked="{Binding PayTaxFromOutsideCash}" />
+
+                        <TextBlock
+                            Foreground="Gray"
+                            FontSize="11"
+                            Text="Not modeled: Required Minimum Distributions, and the early-withdrawal penalty if tax is paid from the balance itself before age 59½."
+                            TextWrapping="Wrap" />
+
+                        <Border BorderBrush="#EEE" BorderThickness="0,1,0,0" />
+
+                        <Grid ColumnDefinitions="*,*">
+                            <StackPanel Grid.Column="0" Spacing="2">
+                                <TextBlock FontWeight="SemiBold" Text="Convert Now (after tax)" />
+                                <TextBlock FontSize="20" Text="{Binding ConvertNowAfterTax, StringFormat={}{0:C}}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Spacing="2">
+                                <TextBlock FontWeight="SemiBold" Text="Don't Convert (after tax)" />
+                                <TextBlock FontSize="20" Text="{Binding DontConvertAfterTax, StringFormat={}{0:C}}" />
+                                <TextBlock
+                                    Foreground="Gray"
+                                    FontSize="12"
+                                    IsVisible="{Binding PayTaxFromOutsideCash}"
+                                    Text="{Binding PreservedOutsideCashAfterTax, StringFormat={}Plus {0:C} preserved outside cash}" />
+                                <TextBlock
+                                    FontWeight="Bold"
+                                    IsVisible="{Binding PayTaxFromOutsideCash}"
+                                    Text="{Binding DontConvertTotal, StringFormat={}Total: {0:C}}" />
+                            </StackPanel>
+                        </Grid>
+
+                        <Border BorderBrush="#EEE" BorderThickness="0,1,0,0" />
+
+                        <TextBlock FontWeight="Bold" Text="{Binding ConversionSummary}" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
+        </ScrollViewer>
+    </Border>
+</UserControl>

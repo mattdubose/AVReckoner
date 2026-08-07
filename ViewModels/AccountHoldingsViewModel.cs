@@ -153,13 +153,6 @@ namespace Reckoner.ViewModels
         }
 
         [RelayCommand]
-        async Task OpenDrawdownSimulation()
-        {
-            if (_appState.CurrentAccount == null) return;
-            await _appShellService.NavigateToAsync<DrawdownSimulationViewModel>();
-        }
-
-        [RelayCommand]
         async Task OpenSimulationCommand()
         {
             if (_appState.CurrentAccount == null) return;

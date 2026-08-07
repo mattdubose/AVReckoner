@@ -65,7 +65,6 @@
                     IsVisible="{Binding IsEditMode}" />
 
                 <Button Classes="primary" Command="{Binding OpenSimulationCommandCommand}" Content="Simulate Contributions" />
-                <Button Classes="primary" Command="{Binding OpenDrawdownSimulationCommand}" Content="Simulate Drawdown" />
 
             </StackPanel>
 
