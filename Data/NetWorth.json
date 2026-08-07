@@ -1,0 +1,498 @@
+{
+  "Accounts": [
+    {
+      "Id": "cash-generic",
+      "ClientId": 303,
+      "Name": "Cash (generic)",
+      "Category": "Cash"
+    },
+    {
+      "Id": "checking-wells",
+      "ClientId": 303,
+      "Name": "Checking \u2013 Wells (rental)",
+      "Category": "Cash"
+    },
+    {
+      "Id": "checking-delta-oop",
+      "ClientId": 303,
+      "Name": "Checking \u2013 Delta (out of pocket)",
+      "Category": "Cash"
+    },
+    {
+      "Id": "checking-delta-paycheck",
+      "ClientId": 303,
+      "Name": "Checking \u2013 Delta (primary paycheck)",
+      "Category": "Cash"
+    },
+    {
+      "Id": "checking-jnt-delta",
+      "ClientId": 303,
+      "Name": "Checking JNT \u2013 Delta (Lucretia)",
+      "Category": "Cash"
+    },
+    {
+      "Id": "savings-delta",
+      "ClientId": 303,
+      "Name": "Savings \u2013 Delta",
+      "Category": "Cash"
+    },
+    {
+      "Id": "savings-jnt-delta-stash",
+      "ClientId": 303,
+      "Name": "Savings JNT \u2013 Delta (stash/emergency)",
+      "Category": "Cash"
+    },
+    {
+      "Id": "savings-jnt-cit",
+      "ClientId": 303,
+      "Name": "Savings JNT \u2013 CIT (real emergency fund)",
+      "Category": "Cash"
+    },
+    {
+      "Id": "coinbase",
+      "ClientId": 303,
+      "Name": "Coinbase",
+      "Category": "TaxableInvested"
+    },
+    {
+      "Id": "vanguard-ibm-hon",
+      "ClientId": 303,
+      "Name": "Vanguard (IBM \u0026 HON)",
+      "Category": "TaxableInvested"
+    },
+    {
+      "Id": "i-bond",
+      "ClientId": 303,
+      "Name": "I Bond",
+      "Category": "TaxableInvested"
+    },
+    {
+      "Id": "taxable-brokerage",
+      "ClientId": 303,
+      "Name": "Taxable Brokerage (Robinhood \u2192 InteractiveBrokers)",
+      "Category": "TaxableInvested"
+    },
+    {
+      "Id": "401k",
+      "ClientId": 303,
+      "Name": "401k",
+      "Category": "PreTax"
+    },
+    {
+      "Id": "trad-ira-william",
+      "ClientId": 303,
+      "Name": "Traditional IRA \u2013 William",
+      "Category": "PreTax"
+    },
+    {
+      "Id": "rollover-ira-lucretia",
+      "ClientId": 303,
+      "Name": "Rollover IRA \u2013 Lucretia",
+      "Category": "PreTax"
+    },
+    {
+      "Id": "roth-ira-william",
+      "ClientId": 303,
+      "Name": "Roth IRA \u2013 William",
+      "Category": "TaxFree"
+    },
+    {
+      "Id": "roth-ira-lucretia",
+      "ClientId": 303,
+      "Name": "Roth IRA \u2013 Lucretia",
+      "Category": "TaxFree"
+    },
+    {
+      "Id": "roth-401k",
+      "ClientId": 303,
+      "Name": "Roth 401k",
+      "Category": "TaxFree"
+    }
+  ],
+  "Balances": [
+    {
+      "AccountId": "savings-jnt-delta-stash",
+      "Date": "2025-05-01T00:00:00",
+      "Balance": 1500.00
+    },
+    {
+      "AccountId": "savings-jnt-cit",
+      "Date": "2025-05-01T00:00:00",
+      "Balance": 135000.00
+    },
+    {
+      "AccountId": "coinbase",
+      "Date": "2025-05-01T00:00:00",
+      "Balance": 14000.00
+    },
+    {
+      "AccountId": "vanguard-ibm-hon",
+      "Date": "2025-05-01T00:00:00",
+      "Balance": 31000.00
+    },
+    {
+      "AccountId": "i-bond",
+      "Date": "2025-05-01T00:00:00",
+      "Balance": 10000.00
+    },
+    {
+      "AccountId": "taxable-brokerage",
+      "Date": "2025-05-01T00:00:00",
+      "Balance": 80000.00
+    },
+    {
+      "AccountId": "401k",
+      "Date": "2025-05-01T00:00:00",
+      "Balance": 165000.00
+    },
+    {
+      "AccountId": "trad-ira-william",
+      "Date": "2025-05-01T00:00:00",
+      "Balance": 425951.00
+    },
+    {
+      "AccountId": "rollover-ira-lucretia",
+      "Date": "2025-05-01T00:00:00",
+      "Balance": 53084.00
+    },
+    {
+      "AccountId": "roth-ira-william",
+      "Date": "2025-05-01T00:00:00",
+      "Balance": 155625.00
+    },
+    {
+      "AccountId": "cash-generic",
+      "Date": "2026-03-01T00:00:00",
+      "Balance": 0.00
+    },
+    {
+      "AccountId": "checking-wells",
+      "Date": "2026-03-01T00:00:00",
+      "Balance": 40.00
+    },
+    {
+      "AccountId": "checking-delta-oop",
+      "Date": "2026-03-01T00:00:00",
+      "Balance": 250.00
+    },
+    {
+      "AccountId": "checking-delta-paycheck",
+      "Date": "2026-03-01T00:00:00",
+      "Balance": 9500.00
+    },
+    {
+      "AccountId": "checking-jnt-delta",
+      "Date": "2026-03-01T00:00:00",
+      "Balance": 440.00
+    },
+    {
+      "AccountId": "savings-delta",
+      "Date": "2026-03-01T00:00:00",
+      "Balance": 3000.00
+    },
+    {
+      "AccountId": "savings-jnt-delta-stash",
+      "Date": "2026-03-01T00:00:00",
+      "Balance": 595.00
+    },
+    {
+      "AccountId": "savings-jnt-cit",
+      "Date": "2026-03-01T00:00:00",
+      "Balance": 150440.53
+    },
+    {
+      "AccountId": "coinbase",
+      "Date": "2026-03-01T00:00:00",
+      "Balance": 8500.00
+    },
+    {
+      "AccountId": "vanguard-ibm-hon",
+      "Date": "2026-03-01T00:00:00",
+      "Balance": 35345.00
+    },
+    {
+      "AccountId": "i-bond",
+      "Date": "2026-03-01T00:00:00",
+      "Balance": 10000.00
+    },
+    {
+      "AccountId": "taxable-brokerage",
+      "Date": "2026-03-01T00:00:00",
+      "Balance": 82761.00
+    },
+    {
+      "AccountId": "401k",
+      "Date": "2026-03-01T00:00:00",
+      "Balance": 176953.00
+    },
+    {
+      "AccountId": "trad-ira-william",
+      "Date": "2026-03-01T00:00:00",
+      "Balance": 548026.00
+    },
+    {
+      "AccountId": "rollover-ira-lucretia",
+      "Date": "2026-03-01T00:00:00",
+      "Balance": 65096.00
+    },
+    {
+      "AccountId": "roth-ira-william",
+      "Date": "2026-03-01T00:00:00",
+      "Balance": 191123.00
+    },
+    {
+      "AccountId": "roth-ira-lucretia",
+      "Date": "2026-03-01T00:00:00",
+      "Balance": 9551.00
+    },
+    {
+      "AccountId": "roth-401k",
+      "Date": "2026-03-01T00:00:00",
+      "Balance": 35891.00
+    },
+    {
+      "AccountId": "cash-generic",
+      "Date": "2026-08-01T00:00:00",
+      "Balance": 0.00
+    },
+    {
+      "AccountId": "checking-wells",
+      "Date": "2026-08-01T00:00:00",
+      "Balance": 2500.00
+    },
+    {
+      "AccountId": "checking-delta-oop",
+      "Date": "2026-08-01T00:00:00",
+      "Balance": 1400.00
+    },
+    {
+      "AccountId": "checking-delta-paycheck",
+      "Date": "2026-08-01T00:00:00",
+      "Balance": 4800.00
+    },
+    {
+      "AccountId": "checking-jnt-delta",
+      "Date": "2026-08-01T00:00:00",
+      "Balance": 750.00
+    },
+    {
+      "AccountId": "savings-delta",
+      "Date": "2026-08-01T00:00:00",
+      "Balance": 5100.00
+    },
+    {
+      "AccountId": "savings-jnt-delta-stash",
+      "Date": "2026-08-01T00:00:00",
+      "Balance": 3300.00
+    },
+    {
+      "AccountId": "savings-jnt-cit",
+      "Date": "2026-08-01T00:00:00",
+      "Balance": 150000.53
+    },
+    {
+      "AccountId": "coinbase",
+      "Date": "2026-08-01T00:00:00",
+      "Balance": 8500.00
+    },
+    {
+      "AccountId": "vanguard-ibm-hon",
+      "Date": "2026-08-01T00:00:00",
+      "Balance": 37957.00
+    },
+    {
+      "AccountId": "i-bond",
+      "Date": "2026-08-01T00:00:00",
+      "Balance": 10000.00
+    },
+    {
+      "AccountId": "taxable-brokerage",
+      "Date": "2026-08-01T00:00:00",
+      "Balance": 80000.00
+    },
+    {
+      "AccountId": "401k",
+      "Date": "2026-08-01T00:00:00",
+      "Balance": 192366.00
+    },
+    {
+      "AccountId": "trad-ira-william",
+      "Date": "2026-08-01T00:00:00",
+      "Balance": 623150.00
+    },
+    {
+      "AccountId": "rollover-ira-lucretia",
+      "Date": "2026-08-01T00:00:00",
+      "Balance": 74702.00
+    },
+    {
+      "AccountId": "roth-ira-william",
+      "Date": "2026-08-01T00:00:00",
+      "Balance": 219200.00
+    },
+    {
+      "AccountId": "roth-ira-lucretia",
+      "Date": "2026-08-01T00:00:00",
+      "Balance": 11623.02
+    },
+    {
+      "AccountId": "roth-401k",
+      "Date": "2026-08-01T00:00:00",
+      "Balance": 46280.00
+    },
+    {
+      "AccountId": "cash-generic",
+      "Date": "2026-08-06T00:00:00",
+      "Balance": 0
+    },
+    {
+      "AccountId": "checking-wells",
+      "Date": "2026-08-06T00:00:00",
+      "Balance": 2500.00
+    },
+    {
+      "AccountId": "checking-delta-oop",
+      "Date": "2026-08-06T00:00:00",
+      "Balance": 1400.00
+    },
+    {
+      "AccountId": "checking-delta-paycheck",
+      "Date": "2026-08-06T00:00:00",
+      "Balance": 4800.00
+    },
+    {
+      "AccountId": "checking-jnt-delta",
+      "Date": "2026-08-06T00:00:00",
+      "Balance": 750.00
+    },
+    {
+      "AccountId": "savings-delta",
+      "Date": "2026-08-06T00:00:00",
+      "Balance": 5100.00
+    },
+    {
+      "AccountId": "savings-jnt-delta-stash",
+      "Date": "2026-08-06T00:00:00",
+      "Balance": 3300.00
+    },
+    {
+      "AccountId": "savings-jnt-cit",
+      "Date": "2026-08-06T00:00:00",
+      "Balance": 150000.53
+    },
+    {
+      "AccountId": "coinbase",
+      "Date": "2026-08-06T00:00:00",
+      "Balance": 8500.00
+    },
+    {
+      "AccountId": "vanguard-ibm-hon",
+      "Date": "2026-08-06T00:00:00",
+      "Balance": 37957.00
+    },
+    {
+      "AccountId": "i-bond",
+      "Date": "2026-08-06T00:00:00",
+      "Balance": 10000.00
+    },
+    {
+      "AccountId": "taxable-brokerage",
+      "Date": "2026-08-06T00:00:00",
+      "Balance": 80000.00
+    },
+    {
+      "AccountId": "401k",
+      "Date": "2026-08-06T00:00:00",
+      "Balance": 192366.00
+    },
+    {
+      "AccountId": "trad-ira-william",
+      "Date": "2026-08-06T00:00:00",
+      "Balance": 623150.00
+    },
+    {
+      "AccountId": "rollover-ira-lucretia",
+      "Date": "2026-08-06T00:00:00",
+      "Balance": 74702.00
+    },
+    {
+      "AccountId": "roth-ira-william",
+      "Date": "2026-08-06T00:00:00",
+      "Balance": 219200.00
+    },
+    {
+      "AccountId": "roth-ira-lucretia",
+      "Date": "2026-08-06T00:00:00",
+      "Balance": 11623.02
+    },
+    {
+      "AccountId": "roth-401k",
+      "Date": "2026-08-06T00:00:00",
+      "Balance": 46280.00
+    }
+  ],
+  "Thresholds": [
+    {
+      "ClientId": 303,
+      "Date": "2025-05-01T00:00:00",
+      "Amount": 100000.00
+    },
+    {
+      "ClientId": 303,
+      "Date": "2026-03-01T00:00:00",
+      "Amount": 100000.00
+    },
+    {
+      "ClientId": 303,
+      "Date": "2026-08-01T00:00:00",
+      "Amount": 100000.00
+    },
+    {
+      "ClientId": 303,
+      "Date": "2026-08-06T00:00:00",
+      "Amount": 100000.00
+    }
+  ],
+  "PhysicalAssets": [
+    {
+      "Id": "house",
+      "ClientId": 303,
+      "Name": "House"
+    },
+    {
+      "Id": "jewelry",
+      "ClientId": 303,
+      "Name": "Jewelry"
+    }
+  ],
+  "PhysicalAssetValues": [
+    {
+      "AssetId": "house",
+      "Date": "2025-05-01T00:00:00",
+      "Value": 500000.00,
+      "Debt": 0.00,
+      "InterestRate": 0.0
+    },
+    {
+      "AssetId": "jewelry",
+      "Date": "2025-05-01T00:00:00",
+      "Value": 15000.00,
+      "Debt": 0.00,
+      "InterestRate": 0.0
+    },
+    {
+      "AssetId": "house",
+      "Date": "2026-08-06T00:00:00",
+      "Value": 600000.00,
+      "Debt": 200000,
+      "InterestRate": 0.025
+    },
+    {
+      "AssetId": "jewelry",
+      "Date": "2026-08-06T00:00:00",
+      "Value": 15000.00,
+      "Debt": 0,
+      "InterestRate": 0
+    }
+  ]
+}
